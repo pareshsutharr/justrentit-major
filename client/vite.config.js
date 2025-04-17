@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
 export default defineConfig({
-  base: '/', // Ensure '/' if you're deploying at root
+    base: './', // very important for correct asset loading!
   plugins: [
     react({
       jsxRuntime: 'automatic'
