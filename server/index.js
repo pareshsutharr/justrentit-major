@@ -49,7 +49,10 @@ const io = new Server(server, {
 
 // Update Express CORS middleware
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: [
+      "http://localhost:5173",
+      "https://justrentit-major-paresh.onrender.com"
+    ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
