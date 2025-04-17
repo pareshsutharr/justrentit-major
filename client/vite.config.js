@@ -1,23 +1,32 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { resolve } from 'path'
 
-// https://vite.dev/config/
 export default defineConfig({
-   base: '/', // or set correctly if deployed on a subpath
-  plugins: [react({
-    jsxRuntime: 'automatic'
-  })],
+  base: '/', // Ensure '/' if you're deploying at root
+  plugins: [
+    react({
+      jsxRuntime: 'automatic'
+    })
+  ],
   server: {
-    host: true, // Allows access from other devices
-    port: 5173, // Optional: Ensure the correct port is used
+    host: true,
+    port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001/', // Backend server address
+        target: 'http://localhost:3001/',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''), // Adjust as needed
+        rewrite: (path) => path.replace(/^\/api/, ''),
       },
-     
     },
+  },
+  build: {
+    outDir: 'dist',
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+      },
+    }
   },
   optimizeDeps: {
     include: [
@@ -29,40 +38,3 @@ export default defineConfig({
     ]
   }
 })
-
-// import { defineConfig } from 'vite';
-// import react from '@vitejs/plugin-react';
-
-// export default defineConfig({
-//   plugins: [
-//     react({
-//       jsxRuntime: 'automatic',
-//       babel: {
-//         plugins: [
-//           ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }]
-//         ]
-//       }
-//     })
-//   ],
-//   optimizeDeps: {
-//     include: [
-//       'react',
-//       'react-dom',
-//       '@mui/material',
-//       '@mui/icons-material',
-//       'react-bootstrap'
-//     ]
-//   },
-//   server: {
-//         host: true, // Allows access from other devices
-//         port: 5173, // Optional: Ensure the correct port is used
-//         proxy: {
-//           '/api': {
-//             target: 'http://localhost:3001/', // Backend server address
-//             changeOrigin: true,
-//             rewrite: (path) => path.replace(/^\/api/, ''), // Adjust as needed
-//           },
-         
-//         },
-//       },
-// });
