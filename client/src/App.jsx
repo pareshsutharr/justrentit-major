@@ -15,7 +15,7 @@ const Dashboard = lazy(() => import('./components/dashboard/Dashboard'));
 const ProductView = lazy(() => import('./components/ProductView'));
 
 import { MantineProvider } from '@mantine/core';
-import AdminDashboard from './components/AdminDashboard/AdminDashboard';
+import AdminDashboard from './components/adminDashboard/AdminDashboard';
 // Fallback Component
 const Loading = () => <div><LoadingPage/></div>;
 function App() {
