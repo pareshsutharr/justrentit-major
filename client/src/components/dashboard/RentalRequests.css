@@ -1,0 +1,186 @@
+.rental-requests-container {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .request-card {
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+  }
+  
+  .request-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .request-details {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin: 15px 0;
+  }
+  .rental-product-image {
+    width: 200px;
+    height: 150px;
+    object-fit: cover;
+  }
+  
+  .requester-info {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+  }
+  
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .rental-product-image {
+    border-radius: 10px;
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .rental-product-image:hover {
+    transform: scale(1.03);
+  }
+  
+  .status-stepper {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 0;
+    position: relative;
+  }
+  
+  .status-stepper .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+  }
+  
+  .status-stepper .step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e9ecef;
+    margin-bottom: 8px;
+  }
+  
+  .status-stepper .step.active .step-icon {
+    background: #0d6efd;
+    color: white;
+  }
+  
+  .status-stepper .connector {
+    position: absolute;
+    height: 2px;
+    background: #dee2e6;
+    top: 20px;
+    left: 50%;
+    right: 50%;
+  }
+  
+  .status-stepper .step.active .connector {
+    background: #0d6efd;
+  }
+  
+  .rental-meta {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+  }
+  
+  .badge {
+    font-size: 0.9rem;
+    padding: 0.5em 0.75em;
+  }
+  
+  @media (max-width: 768px) {
+    .request-card .d-flex {
+      flex-direction: column;
+    }
+    
+    .request-card img {
+      width: 100% !important;
+      height: auto !important;
+      margin-bottom: 15px;
+    }
+    
+    .actions {
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .actions button {
+      width: 100%;
+    }
+  }/* Add to your CSS */
+.rental-progress {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.MuiStepLabel-label {
+  font-size: 0.8rem !important;
+}
+
+.otp-dialog .MuiDialog-paper {
+  padding: 2rem;
+  min-width: 300px;
+}
+.rental-product-image {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.rental-meta {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+}
+.rental-product-image {
+  width: 200px;
+  height: 150px;
+  object-fit: cover;
+}
+
+.rental-meta {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+.stepper-container {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.action-button {
+  transition: all 0.3s ease;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+}
+
+.otp-input {
+  letter-spacing: 8px;
+  font-size: 1.5rem;
+  text-align: center;
+}

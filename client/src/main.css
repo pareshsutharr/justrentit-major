@@ -1,0 +1,27 @@
+/* main.css */
+:root {
+    --background-color: rgba(0, 0, 0, 0.651);
+    --text-color: white;
+  }
+  
+  * {
+    background-color: var(--background-color) !important;
+    color: var(--text-color) !important;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  button, input, textarea, select {
+    background-color: var(--background-color) !important;
+    color: var(--text-color) !important;
+    border: 1px solid white; /* Ensure borders are visible */
+  }
+  
+  a {
+    color: var(--text-color) !important;
+    text-decoration: none;
+  }
+  
+  a:hover {
+    color: lightgray !important;
+  }
+  
