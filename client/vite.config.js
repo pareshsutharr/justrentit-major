@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
+   base: '/', // or set correctly if deployed on a subpath
   plugins: [react({
     jsxRuntime: 'automatic'
   })],
