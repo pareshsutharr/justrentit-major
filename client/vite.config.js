@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
 export default defineConfig({
-    base: './', // very important for correct asset loading!
+  base: './', // very important for correct asset loading!
   plugins: [
     react({
       jsxRuntime: 'automatic'
@@ -18,6 +18,9 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+    },
+    preview: {
+      allowedHosts: ['justrentit-major-chai.onrender.com'], // ✅ Add this line
     },
   },
   build: {
