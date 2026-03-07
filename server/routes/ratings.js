@@ -4,11 +4,11 @@ const Rating = require('../models/Rating');
 const RentalRequest = require('../models/RentalRequest');
 const RentProduct = require('../models/RentProduct');
 const User = require('../models/Users');
+const { verifyToken } = require('../middleware/auth');
 
 // Check pending ratings
-router.get('/check/:requestId', async (req, res) => {
+router.get('/check/:requestId', verifyToken, async (req, res) => {
   try {
-    console.log("Fetching rental request for ID:", req.params.requestId);
     const request = await RentalRequest.findById(req.params.requestId)
       .populate('product owner requester');
 
@@ -16,30 +16,42 @@ router.get('/check/:requestId', async (req, res) => {
       return res.status(404).json({ error: "Rental request not found" });
     }
 
-    console.log("Fetched request:", request);
+    const currentUserId = req.user._id.toString();
+    const ownerId = request.owner?._id?.toString();
+    const requesterId = request.requester?._id?.toString();
+    if (currentUserId !== ownerId && currentUserId !== requesterId) {
+      return res.status(403).json({ error: "Not authorized to rate this request" });
+    }
 
     const results = {
       owner: !await Rating.exists({
         rentalRequest: request._id,
-        rater: req.user?._id, // Ensure req.user exists
+        rater: req.user._id,
         type: 'user',
         ratedUser: request.owner?._id
       }),
       product: !await Rating.exists({
         rentalRequest: request._id,
-        rater: req.user?._id,
+        rater: req.user._id,
         type: 'product',
         ratedProduct: request.product?._id
       }),
       renter: !await Rating.exists({
         rentalRequest: request._id,
-        rater: req.user?._id,
+        rater: req.user._id,
         type: 'user',
         ratedUser: request.requester?._id
       })
     };
 
-    console.log("Rating check results:", results);
+    // Do not allow users to rate themselves.
+    if (currentUserId === ownerId) {
+      results.owner = false;
+    }
+    if (currentUserId === requesterId) {
+      results.renter = false;
+    }
+
     res.json(results);
   } catch (err) {
     console.error("Error in /check/:requestId:", err);
@@ -48,9 +60,38 @@ router.get('/check/:requestId', async (req, res) => {
 });
 
 // Submit rating
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
   try {
     const { rentalRequest, type, ratedUser, ratedProduct, rating, comment } = req.body;
+    const request = await RentalRequest.findById(rentalRequest);
+    if (!request) {
+      return res.status(404).json({ error: "Rental request not found" });
+    }
+
+    if (request.status !== "completed") {
+      return res.status(400).json({ error: "Ratings are allowed only after completion" });
+    }
+
+    const raterId = req.user._id.toString();
+    const ownerId = request.owner.toString();
+    const requesterId = request.requester.toString();
+    if (raterId !== ownerId && raterId !== requesterId) {
+      return res.status(403).json({ error: "Not authorized to submit rating for this request" });
+    }
+
+    if (type === "user" && ratedUser && raterId === ratedUser.toString()) {
+      return res.status(400).json({ error: "You cannot rate yourself" });
+    }
+
+    const duplicate = await Rating.findOne({
+      rentalRequest,
+      rater: req.user._id,
+      type,
+      ...(type === "product" ? { ratedProduct } : { ratedUser }),
+    });
+    if (duplicate) {
+      return res.status(409).json({ error: "Rating already submitted" });
+    }
     
     const newRating = new Rating({
       rater: req.user._id,

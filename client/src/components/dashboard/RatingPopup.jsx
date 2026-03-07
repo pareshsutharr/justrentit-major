@@ -68,10 +68,11 @@ const RatingPopup = ({ request, userId, onClose }) => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
-      setRatingsToSubmit((prev) => ({ ...prev, [type]: false }));
+      const nextRatingsToSubmit = { ...ratingsToSubmit, [type]: false };
+      setRatingsToSubmit(nextRatingsToSubmit);
       Swal.fire("Success!", "Rating submitted successfully", "success");
 
-      if (!Object.values(ratingsToSubmit).some((v) => v)) {
+      if (!Object.values(nextRatingsToSubmit).some((v) => v)) {
         onClose();
       }
     } catch (err) {

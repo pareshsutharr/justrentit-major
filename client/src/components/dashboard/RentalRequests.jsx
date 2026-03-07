@@ -356,13 +356,13 @@ const RentalRequests = () => {
           {renderRequests()}
         </Tab>
       </Tabs>
-      {/* {selectedCompletedRequest && (
+      {selectedCompletedRequest && (
         <RatingPopup
           request={selectedCompletedRequest}
           userId={userId}
           onClose={() => setSelectedCompletedRequest(null)}
         />
-      )} */}
+      )}
     </div>
   );
 };
