@@ -42,19 +42,25 @@ const PORT = process.env.PORT || 3001;
 const publicServerUrl = (process.env.PUBLIC_SERVER_URL || "")
   .trim()
   .replace(/\/$/, "");
-const allowedOrigins = (
-  process.env.CLIENT_URL
-    ? process.env.CLIENT_URL.split(",")
-    : ["http://localhost:5173", "https://justrentit-major-paresh.onrender.com"]
-)
-  .map((origin) => origin.trim())
+const normalizeOrigin = (value) => (value || "").trim().replace(/\/$/, "");
+const configuredOrigins = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map(normalizeOrigin)
   .filter(Boolean);
+const defaultOrigins = [
+  "http://localhost:5173",
+  "https://justrentit-major.vercel.app",
+  "https://justrentit-major-paresh.onrender.com",
+];
+const allowedOrigins = Array.from(
+  new Set([...defaultOrigins, ...configuredOrigins].map(normalizeOrigin).filter(Boolean))
+);
 
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow server-to-server tools and same-origin requests with no Origin header.
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (allowedOrigins.includes(normalizeOrigin(origin))) return callback(null, true);
     return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
