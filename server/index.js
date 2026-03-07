@@ -31,6 +31,7 @@ const RentalManagement = require('./routes/RentalManagement');
 const { verifyToken,verifyAdmin, adminCheck } = require('./middleware/auth');
 const moment = require('moment');
 const PDFDocument = require('pdfkit');
+const crypto = require("crypto");
 
 const ratingRoutes = require('./routes/ratings');// const statsRoutes = require('./routes/stats');
 // Add to your backend routes file
@@ -38,48 +39,43 @@ const ratingRoutes = require('./routes/ratings');// const statsRoutes = require(
 // const adminRoutes = require('./routes/adminRoutes');
 
 const PORT = process.env.PORT || 3001;
+const allowedOrigins = (
+  process.env.CLIENT_URL
+    ? process.env.CLIENT_URL.split(",")
+    : ["http://localhost:5173", "https://justrentit-major-paresh.onrender.com"]
+)
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow server-to-server tools and same-origin requests with no Origin header.
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST"]
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
   }
 });
 
-// Update Express CORS middleware
-app.use(cors({
-  origin: [
-      "http://localhost:5173",
-      "https://justrentit-major-paresh.onrender.com"
-    ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
-}));
-
-// Authentication middleware
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
-  res.header("Access-Control-Allow-Credentials", "true");
-  next();
-});
+app.use(cors(corsOptions));
 
 //GOOGLE AUTHENTICATION IMPORT START
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 //GOOGLE AUTHENTICATION IMPORT END
 
-const corsOptions = {
-  origin: "*", // Or specify your frontend domain
-  methods: "GET,POST,PUT,DELETE",
-  allowedHeaders: "Content-Type,Authorization",
-  credentials: true,
-};
-
 app.use(express.json());
-
-app.use(cors(corsOptions));
 // Set up multer for file upload
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -112,31 +108,92 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log("MongoDB connection error: ", err));
 
-// Register User with Profile Photo
-app.post("/register", upload.single("profilePhoto"), (req, res) => {
-  const { name, email, phone, password } = req.body;
-  const profilePhoto = req.file ? `/uploads/${req.file.filename}` : null;
+app.get("/api/health", (req, res) => {
+  const states = ["disconnected", "connected", "connecting", "disconnecting"];
+  const dbState = states[mongoose.connection.readyState] || "unknown";
+  res.json({
+    success: true,
+    uptime: process.uptime(),
+    dbState,
+  });
+});
 
-  UserModel.findOne({ $or: [{ email }, { phone }] })
-    .then((user) => {
-      if (user) {
-        res.json({
-          success: false,
-          message: "Email or phone number already exists!",
-        });
-      } else {
-        UserModel.create({ name, email, password, phone, profilePhoto })
-          .then((newUser) => {
-            res.json({ success: true, user: newUser });
-          })
-          .catch((err) =>
-            res.json({ success: false, message: "Error creating user." })
-          );
-      }
-    })
-    .catch((err) =>
-      res.json({ success: false, message: "Error checking user." })
-    );
+const hashPassword = (password) =>
+  `sha256$${crypto.createHash("sha256").update(password).digest("hex")}`;
+
+const isPasswordMatch = (inputPassword, storedPassword) => {
+  if (!storedPassword) return false;
+  if (storedPassword.startsWith("sha256$")) {
+    return hashPassword(inputPassword) === storedPassword;
+  }
+  // Backward compatibility for legacy plain-text passwords.
+  return storedPassword === inputPassword;
+};
+
+// Register User with Profile Photo
+app.post("/register", upload.single("profilePhoto"), async (req, res) => {
+  try {
+    const { name, email, phone, password } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+    const normalizedName = name?.trim();
+    const normalizedPhone = phone?.trim();
+    const profilePhoto = req.file ? `/uploads/${req.file.filename}` : null;
+
+    if (!normalizedName || !normalizedEmail || !normalizedPhone || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "All required fields must be provided.",
+      });
+    }
+
+    if (!/^[0-9]{10}$/.test(normalizedPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number must be exactly 10 digits.",
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters.",
+      });
+    }
+
+    const existingUser = await UserModel.findOne({
+      $or: [{ email: normalizedEmail }, { phone: normalizedPhone }],
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "Email or phone number already exists!",
+      });
+    }
+
+    const newUser = await UserModel.create({
+      name: normalizedName,
+      email: normalizedEmail,
+      password: hashPassword(password),
+      phone: normalizedPhone,
+      profilePhoto,
+    });
+
+    return res.status(201).json({ success: true, user: newUser });
+  } catch (err) {
+    console.error("Register error:", err);
+    if (err?.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Email or phone number already exists!",
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: "Registration failed.",
+      error: err?.message || "Unknown error",
+    });
+  }
 });
 
 app.post("/api/auth/google",  async (req, res) => {
@@ -160,9 +217,6 @@ app.post("/api/auth/google",  async (req, res) => {
     let user = await UserModel.findOne({
       $or: [{ googleId: payload.sub }, { email: payload.email }],
     });
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '12h'
-    });
 
     if (!user) {
       user = new UserModel({
@@ -182,6 +236,10 @@ app.post("/api/auth/google",  async (req, res) => {
       await user.save();
     }
 
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '12h'
+    });
+
     // Ensure we return the MongoDB _id field
     res.json({
       success: true,
@@ -196,7 +254,12 @@ app.post("/api/auth/google",  async (req, res) => {
     });
   } catch (error) {
     console.error("Google auth error:", error);
-    res.status(500).json({ success: false, message: "Authentication failed" });
+    const statusCode = error?.message?.toLowerCase().includes("token") ? 401 : 500;
+    res.status(statusCode).json({
+      success: false,
+      message: "Google authentication failed",
+      error: error?.message || "Unknown error",
+    });
   }
 });
 
@@ -289,39 +352,68 @@ app.post("/updateProfile", upload.single("profilePhoto"), async (req, res) => {
   }
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
 
-  const { email, password } = req.body;
+    if (!normalizedEmail || !password) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Email and password are required." });
+    }
 
-  UserModel.findOne({ email: email })
-    .then((user) => {
-      if (user) {
-        
-        if (user.password === password) {
-          const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-            expiresIn: '12h'
-          });
-          res.json({
-            success: true,
-            token,
-            user: {
-              _id: user._id,
-              name: user.name,
-              email: user.email,
-              phone: user.phone,
-              address: user.address,
-              about: user.about,
-              profilePhoto: user.profilePhoto
-            }
-          });
-        } else {
-          res.json({ success: false, message: "The password is incorrect" });
-        }
-      } else {
-        res.json({ success: false, message: "No record found" });
+    const user = await UserModel.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "No record found" });
+    }
+
+    if (!user.password) {
+      return res.status(400).json({
+        success: false,
+        message: "Use Google login for this account.",
+      });
+    }
+
+    if (!isPasswordMatch(password, user.password)) {
+      return res.status(401).json({
+        success: false,
+        message: "The password is incorrect",
+      });
+    }
+
+    // Auto-migrate legacy plain-text passwords to hashed format.
+    if (!user.password.startsWith("sha256$")) {
+      user.password = hashPassword(password);
+      user.save().catch(() => {});
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '12h'
+    });
+
+    return res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        about: user.about,
+        profilePhoto: user.profilePhoto
       }
-    })
-    .catch((err) => res.json({ success: false, error: err }));
+    });
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Login failed.",
+      error: err?.message || "Unknown error",
+    });
+  }
 });
 // Add Rent Product Route
 app.post(
@@ -747,7 +839,12 @@ app.get("/categories", async (req, res) => {
     const categories = await Category.find({});
     res.status(200).json(categories);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch categories" });
+    console.error("GET /categories error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch categories",
+      details: error?.message || "Unknown error",
+    });
   }
 });
 
@@ -884,7 +981,15 @@ app.get("/products", async (req, res) => {
     const query = { available: true };
 
     // Add filters
-    if (categoryId) query.category = categoryId;
+    if (categoryId) {
+      if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid categoryId",
+        });
+      }
+      query.category = categoryId;
+    }
     if (minPrice || maxPrice) {
       query.rentalPrice = {};
       if (minPrice) query.rentalPrice.$gte = parseFloat(minPrice);
@@ -905,7 +1010,12 @@ app.get("/products", async (req, res) => {
 
     res.status(200).json(products);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch products" });
+    console.error("GET /products error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch products",
+      details: error?.message || "Unknown error",
+    });
   }
 });
 

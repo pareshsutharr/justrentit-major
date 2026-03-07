@@ -1,0 +1,48 @@
+.app-footer {
+  background: linear-gradient(180deg, #f9fcff 0%, #eef4fb 100%);
+  border-top: 1px solid var(--border);
+  padding: 3rem 0 2rem;
+}
+
+.app-footer h5 {
+  color: var(--text);
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+}
+
+.app-footer p,
+.footer-copy {
+  color: var(--muted);
+}
+
+.footer-link {
+  color: var(--muted);
+  line-height: 2;
+}
+
+.footer-link:hover {
+  color: var(--primary);
+}
+
+.social-link {
+  color: var(--text);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.social-link:hover {
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.newsletter-input {
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+.newsletter-btn {
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+}

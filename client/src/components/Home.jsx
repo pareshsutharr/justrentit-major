@@ -1,30 +1,16 @@
 import React from "react";
 import Header from "./Header";
 import Footer from "./Footer";
-// import PublicProduct from "./PublicProduct";
-import LocationSection from "./LocationSection";
-// import FHome from "./filter/FHome";
 import CategoriesComponent from "./products/filter/CategoriesComponent";
-import ImageSlider from "./ImageSlider";
-// import HomePage from "./HomePage";
-// import JustRentItLanding from "./JustRentItLanding";
-// import LandingPage from "./Landing/Landingpage";
-// import FiltersComponent from "./filter/FiltersComponent";
+import "./Home.css";
 
 function Home() {
   return (
-    <>
+    <div className="home-page">
       <Header />
-      <LocationSection />
       <CategoriesComponent/>
-      {/* <HomePage/> */}
-      {/* <LandingPage/> */}
-      {/* <FHome/> */} 
-      {/* <ImageSlider/> */}
-      {/* <FilterSidebar/> */}
-      {/* <CategoriesComponent/> */}
       <Footer />
-    </>
+    </div>
   );
 }
 

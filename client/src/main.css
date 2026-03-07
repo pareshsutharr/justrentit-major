@@ -1,27 +1,58 @@
-/* main.css */
 :root {
-    --background-color: rgba(0, 0, 0, 0.651);
-    --text-color: white;
-  }
-  
-  * {
-    background-color: var(--background-color) !important;
-    color: var(--text-color) !important;
-    transition: background-color 0.3s, color 0.3s;
-  }
-  
-  button, input, textarea, select {
-    background-color: var(--background-color) !important;
-    color: var(--text-color) !important;
-    border: 1px solid white; /* Ensure borders are visible */
-  }
-  
-  a {
-    color: var(--text-color) !important;
-    text-decoration: none;
-  }
-  
-  a:hover {
-    color: lightgray !important;
-  }
+  --page-max-width: 1280px;
+  --bg: #f5efe7;
+  --surface: #ffffff;
+  --surface-2: #f7efe3;
+  --text: #202e45;
+  --muted: #626f82;
+  --primary: #2c4f85;
+  --primary-2: #456ea6;
+  --accent: #15b8a6;
+  --border: #e5d7c6;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --shadow-sm: 0 2px 10px rgba(9, 37, 64, 0.07);
+  --shadow-md: 0 10px 30px rgba(9, 37, 64, 0.12);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  /* background:
+    radial-gradient(circle at 8% -10%, rgba(219, 194, 162, 0.24), transparent 35%),
+    radial-gradient(circle at 95% 0%, rgba(123, 149, 186, 0.18), transparent 30%),
+    var(--bg); */
+  color: var(--text);
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Keep header/content/footer aligned to one page width */
+.app-navbar-wrap .container,
+.home-page .container,
+.categories-page,
+.app-footer .container {
+  max-width: var(--page-max-width) !important;
+}
   

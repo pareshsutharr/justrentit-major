@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
+import "./main.css";
 import { MantineProvider } from "@mantine/core";
 import axios from "axios";
 
@@ -14,7 +15,9 @@ axios.interceptors.request.use(config => {
 axios.interceptors.response.use(
   response => response,
   error => {
-    if (error.response.status === 401 && error.response.data.message === 'Token expired') {
+    const status = error?.response?.status;
+    const message = error?.response?.data?.message || "";
+    if (status === 401 && (message.includes("expired") || message.includes("Session expired"))) {
       // Show alert and redirect
       alert('Your session has expired. Please login again.');
       localStorage.removeItem('token');

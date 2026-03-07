@@ -3,15 +3,16 @@ import { Container, Row, Col, Image, Button } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Header from './Header';
 import Footer from './Footer';
+import { NavLink } from 'react-router-dom';
+import './AboutPage.css';
 
 const AboutPage = () => {
   return (
     <>
     <Header/>
-    <div style={{ backgroundColor: '#f8f9fa', padding: '60px 0' }}>
+    <div className="about-page">
       <Container>
-        {/* Page Header */}
-        <Row className="text-center mb-5">
+        <Row className="text-center mb-5 about-hero">
           <Col>
             <h1 className="display-4 font-weight-bold">About Just Rent It</h1>
             <p className="lead text-muted">
@@ -22,7 +23,7 @@ const AboutPage = () => {
 
         {/* About Us Section */}
         <Row className="align-items-center mb-5">
-          <Col md={6}>
+          <Col md={6} className="about-copy">
             <h2 className="font-weight-bold mb-4">Who We Are</h2>
             <p>
               At <strong>Just Rent It</strong>, we are revolutionizing the way people access and offer rental products. 
@@ -36,10 +37,8 @@ const AboutPage = () => {
             <Image
               src="images/about-image.jpg"
               alt="About Us"
-              height="300px"
-              width="500px"
               fluid
-              className="rounded shadow-lg overflow-hidden bg-cover" 
+              className="rounded shadow-lg overflow-hidden about-image" 
             />
           </Col>
         </Row>
@@ -55,24 +54,24 @@ const AboutPage = () => {
         </Row>
         <Row className="text-center">
           <Col md={4} className="mb-4">
-            <div className="p-4 bg-white shadow-lg rounded">
+            <div className="p-4 bg-white shadow-lg rounded about-card h-100">
               <h4 className="font-weight-bold mb-3">Rent Products</h4>
               <p>Browse through a wide selection of products available for rent. Find the perfect item for your needs, from electronics to home appliances.</p>
-              <Button variant="primary" href="/rent-products">Explore Now</Button>
+              <Button as={NavLink} to="/products" variant="primary">Explore Now</Button>
             </div>
           </Col>
           <Col md={4} className="mb-4">
-            <div className="p-4 bg-white shadow-lg rounded">
+            <div className="p-4 bg-white shadow-lg rounded about-card h-100">
               <h4 className="font-weight-bold mb-3">List Your Products</h4>
               <p>If you have products you'd like to rent out, we make it easy to list them for others to find. Start earning today!</p>
-              <Button variant="success" href="/list-product">List Your Product</Button>
+              <Button as={NavLink} to="/dashboard" variant="success">List Your Product</Button>
             </div>
           </Col>
           <Col md={4} className="mb-4">
-            <div className="p-4 bg-white shadow-lg rounded">
+            <div className="p-4 bg-white shadow-lg rounded about-card h-100">
               <h4 className="font-weight-bold mb-3">Trusted Community</h4>
               <p>Our platform is built on trust and transparency. Renters and lenders can review each other to ensure a safe experience for everyone.</p>
-              <Button variant="info" href="/about">Learn More</Button>
+              <Button as={NavLink} to="/about" variant="info">Learn More</Button>
             </div>
           </Col>
         </Row>
@@ -84,7 +83,7 @@ const AboutPage = () => {
             <p className="lead text-muted">
               Join the <strong>Just Rent It</strong> community and start renting or lending with ease. It's free to sign up and start exploring!
             </p>
-            <Button variant="primary" href="/register">Sign Up Now</Button>
+            <Button as={NavLink} to="/register" variant="primary">Sign Up Now</Button>
           </Col>
         </Row>
       </Container>

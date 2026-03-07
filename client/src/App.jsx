@@ -1,5 +1,5 @@
-import React, { Suspense, lazy, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import LoadingPage from './components/loadingpages/LoadingPage';
 import CategoriesComponent from './components/products/filter/CategoriesComponent';
@@ -14,13 +14,10 @@ const AboutPage = lazy(() => import('./components/AboutPage'));
 const Dashboard = lazy(() => import('./components/dashboard/Dashboard'));
 const ProductView = lazy(() => import('./components/ProductView'));
 
-import { MantineProvider } from '@mantine/core';
 import AdminDashboard from './components/adminDashboard/AdminDashboard';
-// Fallback Component
-const Loading = () => <div><LoadingPage/></div>;
+
 function App() {
   return (
-    <MantineProvider>
     <BrowserRouter>
       <Suspense fallback={<LoadingPage/>}>
         <Routes>
@@ -38,7 +35,6 @@ function App() {
         </Routes>
       </Suspense>
     </BrowserRouter>
-    </MantineProvider>
   );
 }
 

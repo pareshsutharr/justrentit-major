@@ -1,0 +1,134 @@
+.app-navbar-wrap {
+  background: transparent;
+  padding-top: 0.55rem;
+  padding-bottom: 0.45rem;
+}
+
+.app-navbar-shell {
+  background: #ffffff;
+  border: 1px solid #e7e9ee;
+  border-radius: 999px;
+  box-shadow: 0 10px 28px rgba(18, 27, 42, 0.12), 0 2px 6px rgba(18, 27, 42, 0.06);
+  padding: 0.55rem 1rem;
+}
+
+.brand-wrap img {
+  height: 44px;
+  width: auto;
+}
+
+.app-navbar-collapse {
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.app-center-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 auto;
+}
+
+.app-nav-link {
+  color: #2c3542;
+  font-weight: 700;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+.app-nav-link:hover,
+.app-nav-link.active {
+  color: #0f2f55;
+  background: #eff4fb;
+}
+
+.app-right-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.app-primary-cta {
+  border: 0;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.58rem 1.05rem;
+  background: linear-gradient(135deg, #0a70b7, #1d8bcf);
+  white-space: nowrap;
+}
+
+.app-primary-cta:hover {
+  color: #fff;
+  opacity: 0.96;
+}
+
+.app-btn-outline {
+  border: 1px solid #d8dde6;
+  color: #202833;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.56rem 1rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  background: #fff;
+}
+
+.app-btn-outline:hover {
+  border-color: #b8c4d8;
+  color: #10284b;
+}
+
+.app-list-btn {
+  border: 0;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 0.56rem 0.95rem;
+  background: linear-gradient(135deg, #c59b66, #b38754);
+  white-space: nowrap;
+}
+
+.app-list-btn:hover {
+  color: #fff;
+  opacity: 0.95;
+}
+
+.profile-dropdown .dropdown-toggle {
+  border: 1px solid #d8dde6;
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  background: #fff;
+}
+
+.profile-dropdown .dropdown-toggle::after {
+  margin-left: 0.45rem;
+}
+
+.app-bell-wrap {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+
+@media (max-width: 1200px) {
+  .app-navbar-shell {
+    border-radius: 18px;
+  }
+
+  .app-navbar-collapse {
+    padding-top: 0.8rem;
+    gap: 0.7rem;
+  }
+
+  .app-center-nav,
+  .app-right-nav {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin: 0;
+  }
+}

@@ -3,14 +3,14 @@ import FiltersComponent from "./FiltersComponent";
 import PublicProduct from "./ProductsComponent";
 import Fuse from "fuse.js"; // For fuzzy search
 import LoadingPage from "../../loadingpages/LoadingPage";
-import Footer from "../../Footer";
-import Header from "../../Header";
+import "./CategoriesComponent.css";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 const CategoriesComponent = () => {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]); // For search results
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
   const [searchQuery, setSearchQuery] = useState(""); // For search input
 
   // State for filters
@@ -26,15 +26,24 @@ const CategoriesComponent = () => {
   // Fetch products from the backend
   const fetchProducts = async () => {
     setLoading(true);
+    setApiError("");
     try {
       const query = new URLSearchParams(filters).toString();
       const response = await fetch(`${baseUrl}/products?${query}`);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Products API failed (${response.status}): ${text}`);
+      }
       const data = await response.json();
-      setProducts(data);
-      setFilteredProducts(data); // Initialize filtered products with all products
+      const nextProducts = Array.isArray(data) ? data : [];
+      setProducts(nextProducts);
+      setFilteredProducts(nextProducts); // Initialize filtered products with all products
       // console.log("Fetched Products:", data);
     } catch (error) {
       console.error("Error fetching products:", error);
+      setProducts([]);
+      setFilteredProducts([]);
+      setApiError("Unable to load products right now.");
     } finally {
       setLoading(false);
     }
@@ -45,10 +54,16 @@ const CategoriesComponent = () => {
     const fetchCategories = async () => {
       try {
         const response = await fetch(`${baseUrl}/categories`);
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`Categories API failed (${response.status}): ${text}`);
+        }
         const data = await response.json();
-        setCategories(data);
+        setCategories(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error fetching categories:", error);
+        setCategories([]);
+        setApiError((prev) => prev || "Unable to load categories right now.");
       }
     };
     fetchCategories();
@@ -87,7 +102,7 @@ const CategoriesComponent = () => {
 
   return (
     // <div className="p-6 bg-gray-100 w-full max-w-[1400px] h-100vh flex flex-col items-center" style={{backgroundImage:'url(images/bghome.png)'}}>
-    <div className="p-6 bg-gray-100 w-full max-w-[1400px] flex flex-col items-center" style={{background:'linear-gradient(135deg, #2E8B57, #1E3A8A)'}}>
+    <div className="categories-page w-100 d-flex flex-column align-items-center">
       {/* <Header/> */}
       <FiltersComponent
         categories={categories}
@@ -100,7 +115,14 @@ const CategoriesComponent = () => {
       {loading ? (
         <div><LoadingPage/></div>
       ) : (
-        <PublicProduct products={filteredProducts} ownerDetails={true} />
+        <>
+          {apiError && (
+            <div className="alert alert-warning w-100 text-center api-warning" role="alert">
+              {apiError}
+            </div>
+          )}
+          <PublicProduct products={filteredProducts} ownerDetails={true} />
+        </>
       )}
       {/* <Footer/> */}
     </div>

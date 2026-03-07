@@ -1,0 +1,16 @@
+.products-shell {
+  background: transparent;
+}
+
+.show-more-btn {
+  border: 1px solid #d7c3a8;
+  background: #f8eedd;
+  color: #6e4d27;
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 0.55rem 1.35rem;
+}
+
+.show-more-btn:hover {
+  background: #f3e3c9;
+}

@@ -29,6 +29,11 @@ function SignUp() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (!validatePhone(phone)) {
+      toast.error("Phone number must be exactly 10 digits.");
+      return;
+    }
+
     // Password validation
     if (password.length < 8) {
       toast.error("Password must be at least 8 characters.");
@@ -74,8 +79,9 @@ function SignUp() {
           toast.error(response.data.message);
         }
       })
-      .catch(() => {
-        toast.error("Error occurred, please try again.");
+      .catch((error) => {
+        const backendMessage = error?.response?.data?.message || error?.response?.data?.error;
+        toast.error(backendMessage || "Registration failed. Please try again.");
       });
   };
 
@@ -86,20 +92,21 @@ function SignUp() {
       });
   
       if (response.data.success) {
-        const userDetails = response.data.user;
-        // Add this line to store userId properly
-        localStorage.setItem('userId', JSON.stringify(userDetails._id));
+        const { token, user: userDetails } = response.data;
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', userDetails._id);
         localStorage.setItem('user', JSON.stringify(userDetails));
         Cookies.set('userDetails', JSON.stringify(userDetails), { expires: 7 });
         navigate('/home');
       }
     } catch (error) {
-      toast.error('Google authentication failed');
+      const backendMessage = error?.response?.data?.error || error?.response?.data?.message;
+      toast.error(backendMessage || 'Google authentication failed');
     }
   };
 
    const handleGoogleError = () => {
-      toast.error('Google login failed');
+      toast.error('Google login failed. Check OAuth Authorized JavaScript origins in Google Cloud Console.');
     };
     
   

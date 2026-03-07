@@ -1,0 +1,23 @@
+.about-page {
+  padding: 3rem 0;
+}
+
+.about-hero {
+  padding: 1.4rem;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(15, 109, 255, 0.08), rgba(21, 184, 166, 0.12));
+}
+
+.about-copy p {
+  color: var(--muted);
+}
+
+.about-image {
+  max-height: 360px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.about-card {
+  border: 1px solid var(--border);
+}

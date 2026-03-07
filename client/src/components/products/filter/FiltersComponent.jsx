@@ -227,8 +227,8 @@ const FiltersComponent = ({
   return (
     <div className="main-container">
       <div className="header-text">
-        <h1 className="display-4 fw-bold title">Discover Rentals Near you</h1>
-        <p className="lead subtitle">Find perfect items for your needs</p>
+        <h1 className="display-4 fw-bold title">Discover Rentals Near You</h1>
+        <p className="lead subtitle">Search, filter, and find the right product in seconds.</p>
       </div>
       
       <div className="filters-wrapper">
@@ -242,8 +242,7 @@ const FiltersComponent = ({
               className="search-input"
             />
             <button
-              className="btn btn-primary filter-toggle"
-              style={{padding:'20px',borderRadius:'50px',  width:'30vh'}}
+              className="btn filter-toggle"
               onClick={() => setShowFilters(!showFilters)}
             >
               {showFilters ? "Filters ▲" : "Filters ▼"}
@@ -371,4 +370,3 @@ const FiltersComponent = ({
 };
 
 export default FiltersComponent;
-

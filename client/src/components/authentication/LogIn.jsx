@@ -34,7 +34,8 @@ function LogIn() {
         }
       })
       .catch((err) => {
-        toast.error("An error occurred. Please try again.");
+        const backendMessage = err?.response?.data?.message || err?.response?.data?.error;
+        toast.error(backendMessage || "Login failed. Please try again.");
         console.log(err);
       });
   };
@@ -54,12 +55,13 @@ function LogIn() {
         navigate('/home');
       }
     }catch (error) {
-      toast.error('Google authentication failed');
+      const backendMessage = error?.response?.data?.error || error?.response?.data?.message;
+      toast.error(backendMessage || 'Google authentication failed');
     }
   };
   
   const handleGoogleError = () => {
-    toast.error('Google login failed');
+    toast.error('Google login failed. Check OAuth Authorized JavaScript origins in Google Cloud Console.');
   };
   
 

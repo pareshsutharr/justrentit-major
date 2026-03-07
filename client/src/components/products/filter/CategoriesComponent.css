@@ -1,0 +1,16 @@
+.categories-page {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 0 0.8rem 2rem;
+  /* background: #f8f4ef; */
+  /* border-radius: 26px; */
+  /* border: 1px solid #eadfce; */
+  /* box-shadow: 0 20px 40px rgba(67, 57, 46, 0.08); */
+}
+
+.api-warning {
+  border-radius: var(--radius-sm);
+  border: 1px solid #e2c9a4;
+  background: #fff6e8;
+  color: #7a5427;
+}

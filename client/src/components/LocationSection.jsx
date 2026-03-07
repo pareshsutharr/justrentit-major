@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FaMapMarkerAlt, FaMap } from "react-icons/fa";
 // Assume LoadingForLocation is already imported
 import LoadingForLocation from "./loadingpages/LoadingForLocation";
+import "./LocationSection.css";
 
 const LocationSection = () => {
   const [location, setLocation] = useState(null);
@@ -74,16 +75,10 @@ const LocationSection = () => {
   return (
     <>
       <div
-        className="bg-light"
-        style={{
-          width: "100%",
-          borderBottom: "2px solid #ccc",
-          boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-        }}
+        className="location-strip"
       >
         <div
-          className="container text-left align-items-center d-flex justify-content-between"
-          style={{ fontSize: "12px" }}
+          className="container text-left align-items-center d-flex justify-content-between location-strip-inner"
         >
           {/* Current Location Section */}
           <div className="d-flex align-items-center m-0">
@@ -99,8 +94,7 @@ const LocationSection = () => {
             ) : (
               <button
                 onClick={handleGetCurrentLocation}
-                className="btn btn-none py-1 align-items-center justify-content-center"
-                style={{ fontWeight: "500", fontSize: "12px" }}
+                className="btn btn-none py-1 align-items-center justify-content-center location-action-btn"
               >
                 <FaMapMarkerAlt className="me-2" /> Detect My Location
               </button>
@@ -109,7 +103,7 @@ const LocationSection = () => {
 
           {/* Error Message */}
           {error && (
-            <div className="alert alert-danger w-50 py-1 align-items-center m-0">
+            <div className="alert alert-danger w-50 py-1 align-items-center m-0 location-error">
               {error}
             </div>
           )}
@@ -117,9 +111,8 @@ const LocationSection = () => {
           {/* Manual Location Button */}
           <div className="align-items-center">
             <button
-              className="btn btn-none py-1 align-items-center justify-content-center"
+              className="btn btn-none py-1 align-items-center justify-content-center location-action-btn"
               onClick={() => setManualOpen(true)}
-              style={{ fontWeight: "500", fontSize: "12px" }}
             >
               <FaMap className="me-2" /> Choose Manually
             </button>
@@ -130,33 +123,11 @@ const LocationSection = () => {
         {manualOpen && (
           <div
             className="manual-popup"
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              zIndex: 1000,
-              fontSize: "8px",
-            }}
           >
             <div
               className="manual-popup-content"
-              style={{
-                background: "#fff",
-                borderRadius: "10px",
-                padding: "25px",
-                width: "90%",
-                maxWidth: "400px",
-                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-                position: "relative",
-              }}
             >
-              <h5 className="text-center mb-4 text-primary" style={{ fontSize: "14px" }}>
+              <h5 className="text-center mb-4 text-primary">
                 Set Location Manually
               </h5>
               <div className="mb-3">

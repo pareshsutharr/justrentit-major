@@ -6,27 +6,25 @@ import {
   NavDropdown,
   Container,
   Image,
-  Form,
-  FormControl,
-  Button,
 } from "react-bootstrap";
-import { useLocation, useNavigate, NavLink } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 import axios from "axios";
 import SearchModal from "./SearchModal";
 import NotificationComponent from "./NotificationComponent";
+import "./Header.css";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 const Header = () => {
   const [user, setUser] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [filteredCategories, setFilteredCategories] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
-  const location = useLocation();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
     setUser(null);
     navigate("/login");
   };
@@ -62,9 +60,12 @@ const Header = () => {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (err) {
+        setUser(null);
+      }
     }
-    console.log(user);
   }, []);
 
 
@@ -87,9 +88,9 @@ const Header = () => {
   }, []);
   return (
     <>
-      <Navbar bg="light" expand="xxl" className="shadow">
-        <Container>
-          <Navbar.Brand href="/">
+      <Navbar expand="xxl" className="app-navbar-wrap sticky-top">
+        <Container className="app-navbar-shell">
+          <Navbar.Brand as={NavLink} to="/" className="brand-wrap">
             <img src="images/jri-logo.png" alt="Logo" width="160" />
           </Navbar.Brand>
 
@@ -112,36 +113,16 @@ const Header = () => {
             </Form>
           </div> */}
 
-          <Navbar.Collapse id="navbar-nav">
-            <Nav className="ms-auto" style={{alignItems:'center'}}>
-              <NavLink
-                to="/"
-                className={`nav-link ${
-                  location.pathname === "/" ? "active" : ""
-                }`}
-              >
-                Home
-              </NavLink>
-              {/* <NavLink
-                to="/products"
-                className={`nav-link ${
-                  location.pathname === "/products" ? "active" : ""
-                }`}
-              >
-                Rent a Product
-              </NavLink> */}
-              <NavLink
-                to="/about"
-                className={`nav-link ${
-                  location.pathname === "/about" ? "active" : ""
-                }`}
-              >
-                About Us
-              </NavLink>
-                {user ? (
+          <Navbar.Collapse id="navbar-nav" className="app-navbar-collapse">
+            <Nav className="app-center-nav">
+            </Nav>
+
+            <Nav className="app-right-nav align-items-center">
+              {user ? (
                 <NavDropdown
+                  className="profile-dropdown"
                   title={
-                    <span>
+                    <span className="d-inline-flex align-items-center gap-2">
                       {user.profilePhoto ? (
                         <Image
                           src={
@@ -153,7 +134,7 @@ const Header = () => {
                           roundedCircle
                           width="35"
                           height="35"
-                          className="me-2"
+                          className="me-1"
                         />
                       ) : (
                         <Image
@@ -162,20 +143,19 @@ const Header = () => {
                           roundedCircle
                           width="40"
                           height="40"
-                          className="me-2"
+                          className="me-1"
                         />
                       )}
-                      {user.name}
+                      <span>{user.name}</span>
                     </span>
                   }
                   id="user-dropdown"
                 >
-                  {/* <NavDropdown.Item href="/profile">Profile</NavDropdown.Item> */}
-                  <NavDropdown.Item href="/dashboard">
+                  <NavDropdown.Item as={NavLink} to="/dashboard">
                     Dashboard
                   </NavDropdown.Item>
                   {user.role === "Admin" && (
-                    <NavDropdown.Item href="/admin">
+                    <NavDropdown.Item as={NavLink} to="/admin">
                       Admin Dashboard
                     </NavDropdown.Item>
                   )}
@@ -185,10 +165,22 @@ const Header = () => {
                   </NavDropdown.Item>
                 </NavDropdown>
               ) : (
-                <Nav.Link href="/login">Login</Nav.Link>
+                <>
+                  <NavLink to="/register" className="app-primary-cta">
+                    Open your account
+                  </NavLink>
+                  <NavLink to="/login" className="app-btn-outline">
+                    Login
+                  </NavLink>
+                </>
               )}
-               {user && (
-                <Nav.Item className="mx-2">
+
+              <NavLink to={user ? "/dashboard" : "/register"} className="app-list-btn">
+                List Product
+              </NavLink>
+
+              {user && (
+                <Nav.Item className="app-bell-wrap ms-1">
                   <NotificationComponent userId={user._id} />
                 </Nav.Item>
               )}
