@@ -12,6 +12,8 @@ import axios from "axios";
 import SearchModal from "./SearchModal";
 import NotificationComponent from "./NotificationComponent";
 import "./Header.css";
+import mainLogo from "../../images/jri-logo.png";
+import defaultProfileImage from "../../images/default-image.png";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 const Header = () => {
   const [user, setUser] = useState(null);
@@ -91,7 +93,7 @@ const Header = () => {
       <Navbar expand="xxl" className="app-navbar-wrap sticky-top">
         <Container className="app-navbar-shell">
           <Navbar.Brand as={NavLink} to="/" className="brand-wrap">
-            <img src="images/jri-logo.png" alt="Logo" width="160" />
+            <img src={mainLogo} alt="Logo" width="160" />
           </Navbar.Brand>
 
           <Navbar.Toggle aria-controls="navbar-nav" />
@@ -138,7 +140,7 @@ const Header = () => {
                         />
                       ) : (
                         <Image
-                          src="images/default-image.png"
+                          src={defaultProfileImage}
                           alt="Default Avatar"
                           roundedCircle
                           width="40"

@@ -38,16 +38,31 @@ const RentProductForm = () => {
   // Fetch categories and countries on mount
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const [categoriesRes, countriesRes] = await Promise.all([
-          axios.get(`${baseUrl}/api/categories`),
-          axios.get('https://restcountries.com/v3.1/all?fields=name')
-        ]);
-        
-        setCategories(categoriesRes.data || []);
-        setCountries(countriesRes.data.map(c => ({ name: c.name.common })).sort((a, b) => a.name.localeCompare(b.name)));
-      } catch (err) {
-        toast.error('Error initializing form data');
+      const [categoriesResult, countriesResult] = await Promise.allSettled([
+        axios.get(`${baseUrl}/api/categories`),
+        axios.get("https://restcountries.com/v3.1/all?fields=name"),
+      ]);
+
+      if (categoriesResult.status === "fulfilled") {
+        const payload = categoriesResult.value?.data;
+        const normalizedCategories = Array.isArray(payload)
+          ? payload
+          : payload?.categories || payload?.data || [];
+        setCategories(normalizedCategories);
+      } else {
+        setCategories([]);
+        toast.error("Failed to load categories");
+      }
+
+      if (countriesResult.status === "fulfilled") {
+        const countryList = (countriesResult.value?.data || [])
+          .map((c) => ({ name: c?.name?.common }))
+          .filter((c) => Boolean(c.name))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setCountries(countryList);
+      } else {
+        setCountries([]);
+        toast.error("Failed to load countries");
       }
     };
     

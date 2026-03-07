@@ -6,6 +6,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import 'react-toastify/dist/ReactToastify.css';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import mainLogo from "../../../images/jri-logo.png";
 const GOOGLE_CLIENT_ID_FIELD = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -114,7 +115,7 @@ function SignUp() {
   return (
     <div style={styles.container}>
       <div style={styles.leftPanel}>
-        <img src="images/jri-logo.png" alt="Rentify Logo" style={styles.logo} />
+        <img src={mainLogo} alt="Rentify Logo" style={styles.logo} />
         <div style={styles.textContent}>
           <h1 style={styles.welcomeText}>Join our community today</h1>
           <p style={styles.description}>

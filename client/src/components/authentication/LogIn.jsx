@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
 import Cookies from "js-cookie"; // For handling cookies
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import mainLogo from "../../../images/jri-logo.png";
 const GOOGLE_CLIENT_ID_FIELD = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -74,7 +75,7 @@ function LogIn() {
   return (
     <div style={styles.container}>
       <div style={styles.leftPanel}>
-        <img src="images/jri-logo.png" alt="Rentify Logo" style={styles.logo} />
+        <img src={mainLogo} alt="Rentify Logo" style={styles.logo} />
         <div style={styles.textContent}>
           <h1 style={styles.welcomeText}>Seamless Product Rentals</h1>
           <p style={styles.description}>
