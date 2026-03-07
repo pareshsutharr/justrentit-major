@@ -243,9 +243,23 @@ app.post("/api/auth/google",  async (req, res) => {
         ratings: 0,
       });
       await user.save();
-    } else if (!user.googleId) {
-      user.googleId = payload.sub;
-      await user.save();
+    } else {
+      let shouldSave = false;
+
+      if (!user.googleId) {
+        user.googleId = payload.sub;
+        shouldSave = true;
+      }
+
+      // Backfill profile photo for existing users who sign in with Google.
+      if (!user.profilePhoto && payload.picture) {
+        user.profilePhoto = payload.picture;
+        shouldSave = true;
+      }
+
+      if (shouldSave) {
+        await user.save();
+      }
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {

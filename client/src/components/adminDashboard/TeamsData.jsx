@@ -285,8 +285,11 @@ const handleBulkVerify = async (verifyStatus) => {
                         <img
                           className="h-10 w-10 rounded-full object-cover border-2 border-white shadow"
                           src={
-                               `${baseUrl}` + user.profilePhoto ||
-                            "/default-avatar.png"
+                            user.profilePhoto
+                              ? user.profilePhoto.startsWith("http")
+                                ? user.profilePhoto
+                                : `${baseUrl}${user.profilePhoto}`
+                              : "/default-avatar.png"
                           }
                           alt={user.name}
                           height={"50px"}

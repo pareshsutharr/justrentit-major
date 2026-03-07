@@ -29,7 +29,11 @@ function ProductView({ productId, products, onClose }) {
           {/* Author Details */}
           <div className="author-details">
             <img
-              src={`${baseUrl}${product.authorDetails.profilePhoto}`}
+              src={
+                product.authorDetails.profilePhoto?.startsWith("http")
+                  ? product.authorDetails.profilePhoto
+                  : `${baseUrl}${product.authorDetails.profilePhoto || ""}`
+              }
               alt={product.authorDetails.name}
               className="author-profile-img"
             />

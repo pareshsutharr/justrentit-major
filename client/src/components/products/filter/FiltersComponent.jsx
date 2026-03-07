@@ -201,9 +201,10 @@
 
 
 
-import React, { useState } from "react";
+import React from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./FiltersComponent.css";
+import heroBgMan from "../../../assets/herobgman.png";
 
 const FiltersComponent = ({
   categories,
@@ -212,8 +213,6 @@ const FiltersComponent = ({
   onSearch,
   searchQuery,
 }) => {
-  const [showFilters, setShowFilters] = useState(false);
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     onFilterChange({ [name]: value });
@@ -225,35 +224,43 @@ const FiltersComponent = ({
   };
 
   return (
-    <div className="main-container">
-      <div className="header-text">
-        <h1 className="display-4 fw-bold title">Discover Rentals Near You</h1>
-        <p className="lead subtitle">Search, filter, and find the right product in seconds.</p>
+    <section className="hero-filter-shell">
+      <div className="hero-filter-bg" aria-hidden="true">
+        <img src={heroBgMan} alt="" />
       </div>
-      
-      <div className="filters-wrapper">
-        <div className="container-search filter-container">
-          <div className="search-box">
+
+      <div className="hero-filter-content">
+        <div className="hero-copy">
+          <h1 className="hero-title">Discover Rentals Near You</h1>
+          <p className="hero-subtitle">
+            Rent products easily and affordably from nearby owners.
+          </p>
+        </div>
+
+        <div className="hero-search-row">
+         
             <input
               type="text"
-              placeholder="🔍 Search by product name..."
+              placeholder="Search by product name..."
               value={searchQuery}
               onChange={handleSearchChange}
               className="search-input"
             />
             <button
               className="btn filter-toggle"
-              onClick={() => setShowFilters(!showFilters)}
+              onClick={() => onSearch(searchQuery)}
+              style={{color:"black"}}
             >
-              {showFilters ? "Filters ▲" : "Filters ▼"}
+              <i className="bi bi-search me-2" ></i>
+              Find Now
             </button>
-          </div>
+          
+        </div>
 
-          {showFilters && (
-            <div className="row mt-4 p-4">
-              {/* Category Filter */}
-              <div className="col-md-3">
-                <label className="form-label">Category</label>
+        <div className="hero-filters-panel">
+          <div className="row g-3">
+              <div className="col-12 col-md-6 col-lg-4">
+                {/* <label className="form-label">Category</label> */}
                 <select
                   name="categoryId"
                   value={currentFilters.categoryId}
@@ -269,9 +276,8 @@ const FiltersComponent = ({
                 </select>
               </div>
 
-              {/* Price Range Filters */}
-              <div className="col-md-3">
-                <label className="form-label">Min Price</label>
+              <div className="col-6 col-md-3 col-lg-2">
+                {/* <label className="form-label">Min Price</label> */}
                 <input
                   type="number"
                   name="minPrice"
@@ -281,8 +287,8 @@ const FiltersComponent = ({
                   placeholder="Min"
                 />
               </div>
-              <div className="col-md-3">
-                <label className="form-label">Max Price</label>
+              <div className="col-6 col-md-3 col-lg-2">
+                {/* <label className="form-label">Max Price</label> */}
                 <input
                   type="number"
                   name="maxPrice"
@@ -293,9 +299,8 @@ const FiltersComponent = ({
                 />
               </div>
 
-              {/* State Filter */}
-              <div className="col-md-3">
-                <label className="form-label">State</label>
+              <div className="col-12 col-md-6 col-lg-4">
+                {/* <label className="form-label">State</label> */}
                 <input
                   type="text"
                   name="state"
@@ -306,9 +311,8 @@ const FiltersComponent = ({
                 />
               </div>
 
-              {/* Condition Filter */}
-              <div className="col-md-3">
-                <label className="form-label">Condition</label>
+              <div className="col-6 col-md-6 col-lg-3">
+                {/* <label className="form-label">Condition</label> */}
                 <select
                   name="condition"
                   value={currentFilters.condition}
@@ -324,9 +328,8 @@ const FiltersComponent = ({
                 </select>
               </div>
 
-              {/* Rental Duration Filter */}
-              <div className="col-md-3">
-                <label className="form-label">Rental Duration</label>
+              <div className="col-6 col-md-6 col-lg-3">
+                {/* <label className="form-label">Rental Duration</label> */}
                 <select
                   name="rentalDuration"
                   value={currentFilters.rentalDuration}
@@ -341,8 +344,7 @@ const FiltersComponent = ({
                 </select>
               </div>
 
-              {/* Reset Filters Button */}
-              <div className="col-md-3 text-left mt-4">
+              <div className="col-12 col-lg-3 d-flex align-items-end">
                 <button
                   onClick={() => {
                     onFilterChange({
@@ -355,17 +357,15 @@ const FiltersComponent = ({
                     });
                     onSearch("");
                   }}
-                  className="btn btn-danger reset-btn"
+                  className="btn btn-danger reset-btn w-100"
                 >
                   Reset Filters
                 </button>
               </div>
-            </div>
-          )}
-        
+          </div>
         </div>
-      </div>
-    </div>
+        </div>
+    </section>
   );
 };
 

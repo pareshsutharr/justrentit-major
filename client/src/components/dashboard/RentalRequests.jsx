@@ -246,7 +246,9 @@ const RentalRequests = () => {
                         <Image
                           src={
                             request.owner?.profilePhoto
-                              ?  `${baseUrl}${request.owner.profilePhoto}`
+                              ? request.owner.profilePhoto.startsWith("http")
+                                ? request.owner.profilePhoto
+                                : `${baseUrl}${request.owner.profilePhoto}`
                               : "/images/default-profile.png"
                           }
                           roundedCircle

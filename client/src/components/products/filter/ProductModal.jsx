@@ -298,7 +298,11 @@ const ProductModal = ({
                 <div className="mb-2">
                   <div className="d-flex align-items-center bg-light p-3 rounded-3">
                     <img
-                      src={`${baseUrl}${selectedProduct.userId?.profilePhoto}`}
+                      src={
+                        selectedProduct.userId?.profilePhoto?.startsWith("http")
+                          ? selectedProduct.userId.profilePhoto
+                          : `${baseUrl}${selectedProduct.userId?.profilePhoto || ""}`
+                      }
                       alt="Owner"
                       className="rounded-circle me-3"
                       style={{

@@ -78,7 +78,11 @@ function PublicProduct() {
             <div className="card h-100">
               <div className="card-header d-flex align-items-center">
                 <img
-                  src={`${baseUrl}${product.authorDetails.profilePhoto}`}
+                  src={
+                    product.authorDetails.profilePhoto?.startsWith("http")
+                      ? product.authorDetails.profilePhoto
+                      : `${baseUrl}${product.authorDetails.profilePhoto || ""}`
+                  }
                   alt={product.authorDetails.name}
                   className="rounded-circle me-3"
                   style={{ width: '50px', height: '50px' }}

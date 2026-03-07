@@ -37,7 +37,11 @@ const ProductCard = ({ product, activeImageIndex, handlePrev, handleNext, openPr
         <div className="card-header border-0 pb-0">
           <div className="d-flex align-items-center">
             <img
-              src={`${baseUrl}${product.userId?.profilePhoto}`}
+              src={
+                product.userId?.profilePhoto?.startsWith("http")
+                  ? product.userId.profilePhoto
+                  : `${baseUrl}${product.userId?.profilePhoto || ""}`
+              }
               alt={product.userId?.name}
               className="user-avatar"
               loading="lazy"
