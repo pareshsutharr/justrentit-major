@@ -1,9 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { resolve } from 'path'
 
 export default defineConfig({
-  base: './', // very important for correct asset loading!
+  base: '/',
   plugins: [
     react({
       jsxRuntime: 'automatic'
@@ -19,17 +18,12 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
-    preview: {
-      allowedHosts: ['justrentit-major-chai.onrender.com'], // ✅ Add this line
-    },
+  },
+  preview: {
+    allowedHosts: true,
   },
   build: {
     outDir: 'dist',
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-      },
-    }
   },
   optimizeDeps: {
     include: [

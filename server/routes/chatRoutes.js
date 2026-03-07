@@ -116,8 +116,11 @@ router.post("/", verifyToken, upload.single('image'), async (req, res) => {
     };
 
     if (req.file) {
+      const configuredBaseUrl = req.app.get('publicServerUrl');
+      const requestBaseUrl = `${req.protocol}://${req.get('host')}`;
+      const baseUrl = configuredBaseUrl || requestBaseUrl;
       messageData.messageType = 'image';
-      messageData.imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+      messageData.imageUrl = `${baseUrl}/uploads/${req.file.filename}`;
     }
 
     const newMessage = new ChatMessage(messageData);

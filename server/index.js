@@ -39,6 +39,9 @@ const ratingRoutes = require('./routes/ratings');// const statsRoutes = require(
 // const adminRoutes = require('./routes/adminRoutes');
 
 const PORT = process.env.PORT || 3001;
+const publicServerUrl = (process.env.PUBLIC_SERVER_URL || "")
+  .trim()
+  .replace(/\/$/, "");
 const allowedOrigins = (
   process.env.CLIENT_URL
     ? process.env.CLIENT_URL.split(",")
@@ -68,6 +71,9 @@ const io = new Server(server, {
   }
 });
 
+app.set("trust proxy", 1);
+app.set("socketio", io);
+app.set("publicServerUrl", publicServerUrl);
 app.use(cors(corsOptions));
 
 //GOOGLE AUTHENTICATION IMPORT START

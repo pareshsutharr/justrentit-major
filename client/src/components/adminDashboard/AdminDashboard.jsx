@@ -219,7 +219,7 @@ const ReportComponent = () => {
   const generateReport = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('${baseUrl}/api/admin/generate-report', {
+      const response = await axios.get(`${baseUrl}/api/admin/generate-report`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         responseType: 'blob'
       });
