@@ -88,15 +88,22 @@ const Header = () => {
 
     fetchUser();
   }, []);
+
+  const navItems = [
+    { to: "/", label: "Home" },
+    { to: "/about", label: "About" },
+  ];
+
   return (
     <>
       <Navbar expand="xxl" className="app-navbar-wrap sticky-top">
-        <Container className="app-navbar-shell">
+        <Container fluid className="app-navbar-shell">
           <Navbar.Brand as={NavLink} to="/" className="brand-wrap">
             <img src={mainLogo} alt="Logo" width="160" />
+            {/* <span className="brand-text">JustRentIt</span> */}
           </Navbar.Brand>
 
-          <Navbar.Toggle aria-controls="navbar-nav" />
+          <Navbar.Toggle aria-controls="navbar-nav" className="app-navbar-toggle" />
 
           {/* <div className="mx-auto d-flex align-items-center justify-content-center w-50">
             <Form className="d-flex w-100 position-relative">
@@ -117,6 +124,11 @@ const Header = () => {
 
           <Navbar.Collapse id="navbar-nav" className="app-navbar-collapse">
             <Nav className="app-center-nav">
+              {navItems.map((item) => (
+                <NavLink key={item.to} to={item.to} className="app-nav-link">
+                  {item.label}
+                </NavLink>
+              ))}
             </Nav>
 
             <Nav className="app-right-nav align-items-center">
@@ -168,11 +180,11 @@ const Header = () => {
                 </NavDropdown>
               ) : (
                 <>
-                  <NavLink to="/register" className="app-primary-cta">
-                    Open your account
-                  </NavLink>
                   <NavLink to="/login" className="app-btn-outline">
                     Login
+                  </NavLink>
+                  <NavLink to="/register" className="app-primary-cta">
+                    Open your account
                   </NavLink>
                 </>
               )}
