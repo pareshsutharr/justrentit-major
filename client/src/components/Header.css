@@ -3,8 +3,9 @@
   top: 0;
   z-index: 1100;
   width: 100%;
-  background: #ffffff;
-  border-bottom: 1px solid #e8edf5;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .app-navbar-shell {
@@ -52,23 +53,23 @@
 }
 
 .app-nav-link {
-  color: #3a4a63;
+  color: #64748b;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   text-decoration: none;
   padding: 0.55rem 0.85rem;
-  border-radius: 10px;
-  transition: all 0.18s ease;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
 .app-nav-link:hover {
-  color: #0f172a;
-  background: #f4f7fb;
+  color: #1e293b;
+  background: #f1f5f9;
 }
 
 .app-nav-link.active {
-  color: #00a877;
-  background: #ecfbf6;
+  color: #cfa869;
+  background: transparent;
 }
 
 .app-right-nav {
@@ -78,53 +79,57 @@
 }
 
 .app-btn-outline {
-  border: 1px solid #d8e2ef;
-  color: #22324b;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
   font-weight: 600;
-  border-radius: 10px;
-  padding: 0.56rem 0.95rem;
+  border-radius: 8px;
+  padding: 0.6rem 1.25rem;
   background: #fff;
   text-decoration: none;
   white-space: nowrap;
-  transition: all 0.18s ease;
+  transition: all 0.2s ease;
 }
 
 .app-btn-outline:hover {
-  border-color: #bccde2;
+  border-color: #cbd5e1;
   color: #0f172a;
+  background: #f8fafc;
 }
 
 .app-primary-cta {
   border: 0;
   color: #fff;
-  font-weight: 700;
-  border-radius: 10px;
-  padding: 0.58rem 1rem;
-  background: linear-gradient(135deg, #00c88f, #00a877);
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.6rem 1.25rem;
+  background: #1e293b;
   text-decoration: none;
   white-space: nowrap;
-  box-shadow: 0 8px 18px rgba(0, 168, 119, 0.28);
+  transition: all 0.2s ease;
 }
 
 .app-primary-cta:hover {
   color: #fff;
-  filter: brightness(1.02);
+  background: #0f172a;
+  transform: translateY(-1px);
 }
 
 .app-list-btn {
   border: 0;
   color: #fff;
-  font-weight: 700;
-  border-radius: 10px;
-  padding: 0.58rem 1rem;
-  background: #1f2d3d;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.6rem 1.25rem;
+  background: #cfa869;
   text-decoration: none;
   white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
 .app-list-btn:hover {
   color: #fff;
-  background: #162131;
+  background: #ba9355;
+  transform: translateY(-1px);
 }
 
 .profile-dropdown .dropdown-toggle {

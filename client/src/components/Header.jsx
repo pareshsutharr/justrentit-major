@@ -105,23 +105,6 @@ const Header = () => {
 
           <Navbar.Toggle aria-controls="navbar-nav" className="app-navbar-toggle" />
 
-          {/* <div className="mx-auto d-flex align-items-center justify-content-center w-50">
-            <Form className="d-flex w-100 position-relative">
-              <FormControl
-                type="search"
-                placeholder="Search..."
-                className="me-2"
-                aria-label="Search"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                style={{ maxWidth: '300px', width: '100%' }}
-              />
-              <Button variant="outline-success" onClick={() => setShowModal(true)}>
-                Search
-              </Button>
-            </Form>
-          </div> */}
-
           <Navbar.Collapse id="navbar-nav" className="app-navbar-collapse">
             <Nav className="app-center-nav">
               {navItems.map((item) => (

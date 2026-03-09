@@ -150,7 +150,7 @@ router.get('/users/:userId', verifyToken, async (req, res) => {
       }
   
       // Verify requested user matches authenticated user
-      if (userId !== req.user.userId) {
+      if (userId !== req.user._id.toString()) {
         return res.status(403).json({ message: 'Unauthorized access' });
       }
   

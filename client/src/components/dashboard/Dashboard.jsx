@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
 import RentProductForm from "./RentProductForm";
-import Header from "../Header";
-import Footer from "../Footer";
 import MyProduct from "./MyProduct";
 import "./Dashboard.css";
 import Chat from "./Chat";
@@ -11,7 +8,7 @@ import RentalRequests from "./RentalRequests"; // Ensure this component exists
 import UserProfiles from "../UserProfiles";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { Home, User, Package, PlusSquare, ClipboardList, MessageSquare} from "lucide-react";
+import { Home, User, Package, PlusSquare, ClipboardList } from "lucide-react";
 // import AdminDashboard from "../AdminDashboard/AdminDashboard";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 function Dashboard() {
@@ -162,8 +159,6 @@ function Dashboard() {
 
   return (
     <div className="dashboard-container">
-      <Header />
-
       <div className="main-content">
         <div className="sidebar">
           <h2 className="sidebar-title">Dashboard</h2>
@@ -192,19 +187,11 @@ function Dashboard() {
               <ClipboardList size={20} className="sidebar-icon" />
               Rental Requests
             </li>
-            <li
-              className="sidebar-item"
-              onClick={() => setActiveComponent("chat")}
-            >
-              <MessageSquare size={20} className="sidebar-icon" />
-              Chat
-            </li>
           </ul>
         </div>
 
         <div className="main-content-area">{renderContent()}</div>
       </div>
-      <Footer />
     </div>
   );
 }

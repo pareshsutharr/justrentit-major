@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Header from "./Header";
 import Footer from "./Footer";
 import "./Home.css";
@@ -8,42 +9,46 @@ import heroIllustration from "../assets/images/hero-illustration.png";
 import howItWorksIllustration from "../assets/images/how-it-works-illustration.png";
 import ctaIllustration from "../assets/images/cta-illustration.png";
 
-const dummyRentals = [
-  {
-    id: 1,
-    title: "C Type Apple charger",
-    location: "Surat",
-    price: "1000",
-    unit: "day",
-    image: "https://images.unsplash.com/photo-1624823183594-5b74681347ba?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    id: 2,
-    title: "DSLR Camera",
-    location: "Surat",
-    price: "845",
-    unit: "day",
-    image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    id: 3,
-    title: "Portable Projector",
-    location: "Surat",
-    price: "895",
-    unit: "day",
-    image: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    id: 4,
-    title: "Camping Tent",
-    location: "Surat",
-    price: "845",
-    unit: "day",
-    image: "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&q=80&w=400",
-  }
-];
+const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
 function Home() {
+  const [allProducts, setAllProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/api/products`);
+        if (response.data.success) {
+          // Get the latest 4 verified products for Featured
+          const verifiedProducts = response.data.products.filter(p => p.verified !== false && p.available !== false);
+          setAllProducts(verifiedProducts);
+          setFeaturedProducts(verifiedProducts.slice(0, 4));
+        }
+      } catch (err) {
+        console.error("Error fetching featured products:", err);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const filteredSearchProducts = allProducts.filter(item => {
+    const nameStr = item.name || item.title || "";
+    const cityStr = item.location?.city || item.location?.area || "";
+    return nameStr.toLowerCase().includes(searchQuery.toLowerCase()) || 
+           cityStr.toLowerCase().includes(searchQuery.toLowerCase());
+  }).slice(0, 5); // Limit dropdown to 5 items
+
+  const handleSearch = () => {
+    // If the user presses enter or clicks search, they can still go to products page if they want to see all
+    if (searchQuery.trim()) {
+      window.location.href = `/products?search=${encodeURIComponent(searchQuery)}`;
+    }
+  };
+
   return (
     <div className="home-page-redesign">
       <Header />
@@ -63,11 +68,51 @@ function Home() {
                   <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                   <input
                     type="text"
-                    placeholder="Search by product name..."
+                    placeholder="Search by product name or city..."
                     className="hero-search-input"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowDropdown(e.target.value.trim().length > 0);
+                    }}
+                    onFocus={() => {
+                      if (searchQuery.trim().length > 0) setShowDropdown(true);
+                    }}
+                    onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   />
+                  
+                  {/* Inline Search Dropdown */}
+                  {showDropdown && (
+                    <div className="hero-search-dropdown">
+                      {filteredSearchProducts.length > 0 ? (
+                        filteredSearchProducts.map(item => {
+                          let imgUrl = item.images && item.images.length > 0 ? item.images[0] : "";
+                          if (imgUrl && !imgUrl.startsWith('http')) {
+                            imgUrl = `${baseUrl}/${imgUrl.replace(/\\/g, '/').replace(/^\//, '')}`;
+                          }
+                          return (
+                            <div key={item._id} className="search-dropdown-item" onClick={() => window.location.href = `/product/${item._id}`}>
+                              <img src={imgUrl || 'https://via.placeholder.com/40'} alt={item.name} className="search-dropdown-img" />
+                              <div className="search-dropdown-info">
+                                <strong>{item.name}</strong>
+                                <span>{item.location?.city || "Unknown"} • ₹{item.rentalPrice}/{item.rentalDuration}</span>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="search-dropdown-empty">No products found.</div>
+                      )}
+                      {filteredSearchProducts.length > 0 && (
+                        <div className="search-dropdown-footer" onClick={handleSearch}>
+                          See all results for "{searchQuery}"
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <button className="hero-filter-btn">
+                <button className="hero-filter-btn" onClick={(e) => { e.preventDefault(); setShowDropdown(!showDropdown); }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
                   <span>Filters</span>
                   <svg className="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -94,32 +139,55 @@ function Home() {
             </div>
             
             <div className="rental-grid">
-              {dummyRentals.map((item) => (
-                <div key={item.id} className="rental-card">
-                  <div className="card-image-box">
-                    <img src={item.image} alt={item.title} />
-                    <span className="image-badge">1/1</span>
-                  </div>
-                  <div className="card-body">
-                    <h3 className="card-title">{item.title}</h3>
-                    <div className="card-location">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                      <span>{item.location}</span>
-                    </div>
-                    <div className="card-footer">
-                      <div className="card-price">
-                        <span className="currency">₹</span>
-                        <span className="amount">{item.price}</span>
-                        <span className="per">per</span>
+              {featuredProducts.length > 0 ? (
+                featuredProducts.map((item) => {
+                  let imageUrl = item.images && item.images.length > 0 ? item.images[0] : "";
+                  if (imageUrl && !imageUrl.startsWith('http')) {
+                    // Prepend baseUrl, ensure no double slashes if imageUrl starts with /
+                    const cleanPath = imageUrl.replace(/\\/g, '/');
+                    imageUrl = cleanPath.startsWith('/') 
+                      ? `${baseUrl}${cleanPath}` 
+                      : `${baseUrl}/${cleanPath}`;
+                  }
+                  
+                  return (
+                    <div key={item._id} className="rental-card" onClick={() => window.location.href = `/product/${item._id}`} style={{cursor: 'pointer'}}>
+                      <div className="card-image-box">
+                        {imageUrl ? (
+                          <img src={imageUrl} alt={item.name} />
+                        ) : (
+                          <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e2e8f0', color: '#94a3b8'}}>No Image</div>
+                        )}
+                        {item.images && item.images.length > 1 && (
+                          <span className="image-badge">1/{item.images.length}</span>
+                        )}
                       </div>
-                      <div className="card-unit">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                        <span>Per {item.unit}</span>
+                      <div className="card-body">
+                        <h3 className="card-title">{item.name}</h3>
+                        <div className="card-location">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                          <span>{item.location?.area || item.location?.city || "Unknown Location"}</span>
+                        </div>
+                        <div className="card-footer">
+                          <div className="card-price">
+                            <span className="currency">₹</span>
+                            <span className="amount">{item.rentalPrice}</span>
+                            <span className="per">per</span>
+                          </div>
+                          <div className="card-unit">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            <span style={{textTransform: 'capitalize'}}>Per {item.rentalDuration || 'day'}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  );
+                })
+              ) : (
+                <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#64748b'}}>
+                  <p>No featured products available yet. Be the first to list!</p>
                 </div>
-              ))}
+              )}
             </div>
 
             <div className="text-center mt-5">

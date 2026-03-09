@@ -274,8 +274,10 @@ app.post("/api/auth/google",  async (req, res) => {
         _id: user._id.toString(), // Convert to string for consistency
         name: user.name,
         email: user.email,
+        phone: user.phone || "",
         profilePhoto: user.profilePhoto,
         googleId: user.googleId,
+        role: user.role || "User",
       },
     });
   } catch (error) {
@@ -429,7 +431,8 @@ app.post("/login", async (req, res) => {
         phone: user.phone,
         address: user.address,
         about: user.about,
-        profilePhoto: user.profilePhoto
+        profilePhoto: user.profilePhoto,
+        role: user.role || "User",
       }
     });
   } catch (err) {

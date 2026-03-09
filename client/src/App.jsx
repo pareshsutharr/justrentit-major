@@ -1,20 +1,25 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import LoadingPage from './components/loadingpages/LoadingPage';
-import CategoriesComponent from './components/products/filter/CategoriesComponent';
-// import SearchResults from './components/SearchResults';
-// import axios from 'axios';
-// Lazy loading components
+
+// Basic AppLayout wrappers for other generic routes (to be updated later)
+import AppLayout from './components/layout/AppLayout';
+
+// New Next.js-like Pages structure
+const Home = lazy(() => import('./pages/home/Home'));
+
+// Old components (to be refactored to pages later)
 const SignUp = lazy(() => import('./components/authentication/SignUp'));
 const LogIn = lazy(() => import('./components/authentication/LogIn'));
 const UserProfiles = lazy(() => import('./components/UserProfiles'));
-const Home = lazy(() => import('./components/Home'));
+const CategoriesComponent = lazy(() => import('./components/products/filter/CategoriesComponent'));
 const AboutPage = lazy(() => import('./components/AboutPage'));
 const Dashboard = lazy(() => import('./components/dashboard/Dashboard'));
-const ProductView = lazy(() => import('./components/ProductView'));
+const AdminDashboard = lazy(() => import('./components/adminDashboard/AdminDashboard'));
+const SearchPage = lazy(() => import('./pages/search/SearchPage'));
+const FavoritesPage = lazy(() => import('./pages/favorites/FavoritesPage'));
 
-import AdminDashboard from './components/adminDashboard/AdminDashboard';
+const ProductPage = lazy(() => import('./pages/product/ProductPage'));
 
 function App() {
   return (
@@ -22,13 +27,16 @@ function App() {
       <Suspense fallback={<LoadingPage/>}>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/register" element={<SignUp />} />
-          <Route path="/profile" element={<UserProfiles />} />
-          <Route path="/products" element={<CategoriesComponent />} />
-          <Route path="/product/:id" element={<ProductView />} />
-          <Route path="/login" element={<LogIn />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/products" element={<SearchPage />} />
+          <Route path="/favorites" element={<FavoritesPage />} />
+          <Route path="/product/:id" element={<ProductPage />} />
+          
+          {/* Wrapped legacy routes in AppLayout for consistency during refactor */}
+          <Route path="/register" element={<AppLayout><SignUp /></AppLayout>} />
+          <Route path="/profile" element={<AppLayout><UserProfiles /></AppLayout>} />
+          <Route path="/login" element={<AppLayout><LogIn /></AppLayout>} />
+          <Route path="/about" element={<AppLayout><AboutPage /></AppLayout>} />
+          <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
           <Route path="/admin" element={<AdminDashboard />} />
 
           <Route path="*" element={<Home />} />
