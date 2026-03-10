@@ -15,6 +15,9 @@ import {
 import { getApiBaseUrl, getImageUrl } from "../../utils/productHelpers";
 
 const baseUrl = getApiBaseUrl();
+const authHeaders = () => ({
+  Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+});
 
 const toRelativeTime = (value) => {
   if (!value) return "";
@@ -39,6 +42,26 @@ const normalizeUser = (user) => ({
   lastMessageAt: user?.lastMessageAt || null,
   unreadCount: Number(user?.unreadCount || 0)
 });
+
+const mergeUserRecord = (incoming, existing = null) => {
+  const next = normalizeUser(incoming);
+  const current = existing ? normalizeUser(existing) : null;
+
+  return {
+    ...current,
+    ...next,
+    _id: next._id || current?._id || "",
+    name:
+      next.name && next.name !== "Unknown User"
+        ? next.name
+        : current?.name || "Unknown User",
+    profilePhoto: next.profilePhoto || current?.profilePhoto || "",
+    email: next.email || current?.email || "",
+    lastMessage: next.lastMessage || current?.lastMessage || "",
+    lastMessageAt: next.lastMessageAt || current?.lastMessageAt || null,
+    unreadCount: Number(next.unreadCount || current?.unreadCount || 0)
+  };
+};
 
 const normalizeMessage = (message) => {
   if (!message) return null;
@@ -108,7 +131,7 @@ const MessengerPopup = () => {
 
         if (message.senderId !== userId) {
           socketRef.current?.emit("seenMessages", { partnerId: message.senderId });
-          axios.patch(`${baseUrl}/api/chat/read/${message.senderId}`).catch(() => {});
+          axios.patch(`${baseUrl}/api/chat/read/${message.senderId}`, {}, { headers: authHeaders() }).catch(() => {});
         }
       }
 
@@ -119,7 +142,14 @@ const MessengerPopup = () => {
           if (user._id !== partnerId) return user;
           found = true;
           return {
-            ...user,
+            ...mergeUserRecord(
+              {
+                _id: partnerId,
+                name: message.senderId === userId ? user.name : message.senderName || user.name,
+                profilePhoto: message.senderId === userId ? user.profilePhoto : message.senderAvatar || user.profilePhoto
+              },
+              user
+            ),
             lastMessage: message.messageType === "image" ? "Photo" : message.content,
             lastMessageAt: message.createdAt,
             unreadCount:
@@ -129,7 +159,7 @@ const MessengerPopup = () => {
 
         if (!found) {
           next.unshift(
-            normalizeUser({
+            mergeUserRecord({
               _id: partnerId,
               name: message.senderId === userId ? "User" : message.senderName || "User",
               profilePhoto: message.senderId === userId ? "" : message.senderAvatar,
@@ -168,13 +198,14 @@ const MessengerPopup = () => {
 
   useEffect(() => {
     const openChatForUser = (event) => {
-      const target = normalizeUser(event?.detail || {});
+      const target = mergeUserRecord(event?.detail || {});
       if (!target._id) return;
 
       setUsers((prev) => {
-        const exists = prev.some((item) => item._id === target._id);
-        const merged = exists ? prev : [target, ...prev];
-        return merged;
+        const existing = prev.find((item) => item._id === target._id) || null;
+        const mergedTarget = mergeUserRecord(target, existing);
+        const next = prev.filter((item) => item._id !== target._id);
+        return [mergedTarget, ...next];
       });
 
       setSelectedUserId(target._id);
@@ -191,9 +222,19 @@ const MessengerPopup = () => {
     const fetchUsers = async () => {
       setLoadingUsers(true);
       try {
-        const response = await axios.get(`${baseUrl}/api/chat/users/${userId}`);
+        const response = await axios.get(`${baseUrl}/api/chat/users/${userId}`, { headers: authHeaders() });
         const data = Array.isArray(response.data) ? response.data.map(normalizeUser) : [];
-        setUsers(data.sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0)));
+        setUsers((prev) => {
+          const previousById = new Map(prev.map((item) => [item._id, item]));
+          const incomingIds = new Set(data.map((item) => item._id));
+          const merged = data.map((item) => mergeUserRecord(item, previousById.get(item._id)));
+          prev.forEach((item) => {
+            if (!incomingIds.has(item._id)) {
+              merged.push(item);
+            }
+          });
+          return merged.sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0));
+        });
       } catch {
         setUsers([]);
       } finally {
@@ -210,11 +251,11 @@ const MessengerPopup = () => {
     const fetchMessages = async () => {
       setLoadingMessages(true);
       try {
-        const response = await axios.get(`${baseUrl}/api/chat/${userId}/${selectedUserId}`);
+        const response = await axios.get(`${baseUrl}/api/chat/${userId}/${selectedUserId}`, { headers: authHeaders() });
         const data = Array.isArray(response.data) ? response.data.map(normalizeMessage).filter(Boolean) : [];
         setMessages(data);
 
-        await axios.patch(`${baseUrl}/api/chat/read/${selectedUserId}`);
+        await axios.patch(`${baseUrl}/api/chat/read/${selectedUserId}`, {}, { headers: authHeaders() });
         socketRef.current?.emit("seenMessages", { partnerId: selectedUserId });
 
         setUsers((prev) => prev.map((u) => (u._id === selectedUserId ? { ...u, unreadCount: 0 } : u)));

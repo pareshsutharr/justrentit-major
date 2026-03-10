@@ -1,75 +1,84 @@
-.dashboard-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: #f5f5f5;
-  }
-  
-  .main-content {
-    display: flex;
-    gap: 20px;
-    padding: 20px;
-  }
-  
-  .sidebar {
-    width: 250px;
-    background-color: #ffffff;
-    padding: 20px;
-    box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.1);
-    flex-shrink: 0;
-  }
-  
-  .sidebar-title {
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-    color: #333;
-  }
-  
-  .sidebar-menu {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .sidebar-link, .sidebar-item {
-    text-decoration: none;
-    color: #007bff;
-    font-size: 1.1rem;
-    margin: 10px 0;
-    cursor: pointer;
-  }
-  
-  .main-content-area {
-    flex: 1;
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
-  .dashboard-welcome-title {
-    font-size: 2rem;
-    margin-bottom: 20px;
-    color: #333;
-  }
-  
-  .stats-container {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-  }
-  
-  .stat-box {
-    background-color: #f9f9f9;
-    padding: 20px;
-    border-radius: 5px;
-    flex: 1 1 250px;
-  }
-  
-  .stat-box h3 {
-    color: #007bff;
-  }
+/* Dashboard — legacy CSS removed. All layout is now Tailwind-based in Dashboard.jsx */
+/* Kept only component-specific overrides that cannot be expressed as Tailwind utilities */
 
-  /* Dashboard.css */
+/* Rental request highlight (used in RentalRequests.jsx) */
+.highlight-new-request {
+  border-left: 3px solid var(--primary) !important;
+}
+
+/* Chat component scroll area */
+.chat-messages-area {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.main-content {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #ffffff;
+  padding: 20px;
+  box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.sidebar-title {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar-link,
+.sidebar-item {
+  text-decoration: none;
+  color: #007bff;
+  font-size: 1.1rem;
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+.main-content-area {
+  flex: 1;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-welcome-title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.stats-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-box {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 5px;
+  flex: 1 1 250px;
+}
+
+.stat-box h3 {
+  color: #007bff;
+}
+
+/* Dashboard.css */
 .dashboard-container {
   display: flex;
   flex-direction: column;
@@ -86,7 +95,7 @@
   width: 250px;
   background: #fff;
   padding: 20px;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-title {
@@ -102,7 +111,7 @@
 
 .sidebar-item {
   padding: 12px 15px;
- 
+
   margin: 8px 0;
   border-radius: 8px;
   cursor: pointer;
@@ -126,7 +135,7 @@
   background: white;
   margin: 20px;
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .stats-container {
@@ -140,30 +149,31 @@
   background: #fff;
   padding: 25px;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
 }
 
 .stat-box:hover {
   transform: translateY(-5px);
 }
-  
-  .rental-requests-container {
-    padding: 20px;
-  }
-  
-  .rental-request-list {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .rental-request-item {
-    background: #f9f9f9;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 10px;
-  }
-  .dashboard-analytics {
+
+.rental-requests-container {
+  padding: 20px;
+}
+
+.rental-request-list {
+  list-style: none;
+  padding: 0;
+}
+
+.rental-request-item {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.dashboard-analytics {
   padding: 20px;
 }
 
@@ -178,7 +188,7 @@
   background: #fff;
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card h3 {
@@ -202,7 +212,7 @@
   background: white;
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .chart-card h4 {
@@ -221,6 +231,7 @@
   text-align: center;
   padding: 20px;
 }
+
 .stat-box {
   position: relative;
   padding: 20px;
@@ -249,9 +260,11 @@
   0% {
     transform: translateX(-100%);
   }
+
   50% {
     transform: translateX(100%);
   }
+
   100% {
     transform: translateX(-100%);
   }

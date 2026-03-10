@@ -26,6 +26,7 @@ import ProductManagement from "./ProductManagement";
 import RentalManagement from "./RentalManagement";
 import { FaDownload } from "react-icons/fa";
 import { Chart } from "chart.js";
+import Navbar from "../layout/Navbar";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 function AdminDashboard() {
   const [activeComponent, setActiveComponent] = useState("dashboard");
@@ -95,70 +96,71 @@ function AdminDashboard() {
 
   return (
     <div className="dashboard-container">
-      <Header />
+     
+     <Navbar/>
 
       <div className="main-content">
         <div className="sidebar">
           <h2 className="sidebar-title">Admin Portal</h2>
           <ul className="sidebar-menu">
             <li
-              className="sidebar-item"
+              className={`sidebar-item ${activeComponent === "dashboard" ? "active" : ""}`}
               onClick={() => setActiveComponent("dashboard")}
             >
               <Home size={20} className="sidebar-icon" />
               Overview
             </li>
             <li
-              className="sidebar-item"
+              className={`sidebar-item ${activeComponent === "user-management" ? "active" : ""}`}
               onClick={() => setActiveComponent("user-management")}
             >
               <UsersFour size={20} className="sidebar-icon" />
               User Management
             </li>
             <li
-              className="sidebar-item"
+              className={`sidebar-item ${activeComponent === "product-management" ? "active" : ""}`}
               onClick={() => setActiveComponent("product-management")}
             >
               <Package size={20} className="sidebar-icon" />
               Products
             </li>
             <li
-              className="sidebar-item"
+              className={`sidebar-item ${activeComponent === "category-management" ? "active" : ""}`}
               onClick={() => setActiveComponent("category-management")}
             >
               <Tag size={20} className="sidebar-icon" />
               Categories
             </li>
             <li
-              className="sidebar-item"
+              className={`sidebar-item ${activeComponent === "rental-management" ? "active" : ""}`}
               onClick={() => setActiveComponent("rental-management")}
             >
               <ClipboardList size={20} className="sidebar-icon" />
               Rentals
             </li>
             <li
-              className="sidebar-item"
+              className={`sidebar-item ${activeComponent === "analytics" ? "active" : ""}`}
               onClick={() => setActiveComponent("analytics")}
             >
               <BarChart size={20} className="sidebar-icon" />
               Analytics
             </li>
             <li
-              className="sidebar-item"
+              className={`sidebar-item ${activeComponent === "chat" ? "active" : ""}`}
               onClick={() => setActiveComponent("chat")}
             >
               <ChartArea size={20} className="sidebar-icon" />
               Chat
             </li>
             <li
-              className="sidebar-item"
+              className={`sidebar-item ${activeComponent === "Profile" ? "active" : ""}`}
               onClick={() => setActiveComponent("Profile")}
             >
               <User size={20} className="sidebar-icon" />
               Profile
             </li>
             <li
-              className="sidebar-item"
+              className={`sidebar-item ${activeComponent === "report" ? "active" : ""}`}
               onClick={() => setActiveComponent("report")}
             >
               <FileText size={20} className="sidebar-icon" />

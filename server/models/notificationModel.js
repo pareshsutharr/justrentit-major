@@ -13,7 +13,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['product_updated', 'system', 'rental', 'security','product_added','product_deleted','profile_update','product_request_send'],
+    enum: ['product_updated', 'system', 'rental', 'security','product_added','product_deleted','profile_update','product_request_send', 'payment_done', 'invoice_created'],
     default: 'system'
   },
   read: {

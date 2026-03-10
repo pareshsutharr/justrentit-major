@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import './ProductCard.css';
+import { openRazorpayPaymentLink } from '../../../utils/paymentLink';
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 const ProductCard = ({ product, activeImageIndex, handlePrev, handleNext, openProductView }) => {
   if (!product?.userId || !product?._id) return null;
@@ -174,12 +175,21 @@ const ProductCard = ({ product, activeImageIndex, handlePrev, handleNext, openPr
               </div>
               
             </div>
-            <button 
-              onClick={() => openProductView(product)}
-              className="view-button"
-            >
-              <i className="bi bi-eye"></i>View Details
-            </button>
+            <div className="d-flex gap-2">
+              <button
+                onClick={openRazorpayPaymentLink}
+                className="btn btn-light btn-sm rounded-pill"
+                type="button"
+              >
+                <i className="bi bi-credit-card me-1"></i>Pay
+              </button>
+              <button 
+                onClick={() => openProductView(product)}
+                className="view-button"
+              >
+                <i className="bi bi-eye"></i>View Details
+              </button>
+            </div>
           </div>
         </div>
       </div>

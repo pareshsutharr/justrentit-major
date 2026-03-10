@@ -21,6 +21,7 @@ const userRoutes = require("./routes/userRoutes");
 const Notification = require("./models/notificationModel");
 const notificationRoutes = require("./routes/notificationRoutes"); // Import the notification routes
 const rentalRequestsRouter = require('./routes/rentalRequests');
+const invoiceRoutes = require("./routes/invoices");
 const userManagementRoutes = require('./routes/userManagementRoutes');
 // const dashboardRoutes = require('./routes/dashboard');
 const adminStatsRoutes = require('./routes/adminStats');
@@ -32,6 +33,7 @@ const { verifyToken,verifyAdmin, adminCheck } = require('./middleware/auth');
 const moment = require('moment');
 const PDFDocument = require('pdfkit');
 const crypto = require("crypto");
+const Rating = require("./models/Rating");
 
 const ratingRoutes = require('./routes/ratings');// const statsRoutes = require('./routes/stats');
 // Add to your backend routes file
@@ -50,6 +52,7 @@ const configuredOrigins = (process.env.CLIENT_URL || "")
 const defaultOrigins = [
   "http://localhost:5173",
   "https://justrentit-major.vercel.app",
+  "https://justrentit-major.onrender.com",
   "https://justrentit-major-paresh.onrender.com",
 ];
 const allowedOrigins = Array.from(
@@ -63,7 +66,7 @@ const corsOptions = {
     if (allowedOrigins.includes(normalizeOrigin(origin))) return callback(null, true);
     return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 };
@@ -72,7 +75,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
   }
 });
@@ -140,6 +143,53 @@ const isPasswordMatch = (inputPassword, storedPassword) => {
   }
   // Backward compatibility for legacy plain-text passwords.
   return storedPassword === inputPassword;
+};
+
+const removeUploadedFile = async (filePath) => {
+  if (!filePath || typeof filePath !== "string" || !filePath.startsWith("/uploads/")) return;
+  const absolutePath = path.join(__dirname, filePath.replace(/^\//, ""));
+  try {
+    await fs.promises.unlink(absolutePath);
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      console.error("Failed to remove uploaded file:", absolutePath, error);
+    }
+  }
+};
+
+const createRazorpayAuthHeader = () => {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  if (!keyId || !keySecret) return null;
+  return `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`;
+};
+
+const createRazorpayOrder = async ({ amount, currency = "INR", receipt, notes = {} }) => {
+  const authHeader = createRazorpayAuthHeader();
+  if (!authHeader) {
+    throw new Error("Razorpay keys are not configured");
+  }
+
+  const response = await fetch("https://api.razorpay.com/v1/orders", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: authHeader,
+    },
+    body: JSON.stringify({
+      amount,
+      currency,
+      receipt,
+      notes,
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error?.description || "Failed to create Razorpay order");
+  }
+
+  return data;
 };
 
 // Register User with Profile Photo
@@ -376,6 +426,142 @@ app.post("/updateProfile", upload.single("profilePhoto"), async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: "Error updating profile" 
+    });
+  }
+});
+
+app.post("/api/payments/razorpay/order", verifyToken, async (req, res) => {
+  try {
+    const { amount, currency = "INR", receipt, notes = {} } = req.body;
+    const normalizedAmount = Number(amount);
+
+    if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
+      return res.status(400).json({ success: false, message: "A valid amount is required" });
+    }
+
+    const order = await createRazorpayOrder({
+      amount: Math.round(normalizedAmount),
+      currency,
+      receipt: receipt || `receipt_${Date.now()}`,
+      notes: {
+        userId: req.user._id.toString(),
+        ...notes,
+      },
+    });
+
+    return res.json({
+      success: true,
+      order,
+      key: process.env.RAZORPAY_KEY_ID || "",
+    });
+  } catch (error) {
+    console.error("Razorpay order error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Unable to create Razorpay order",
+    });
+  }
+});
+
+app.post("/api/payments/razorpay/verify", verifyToken, async (req, res) => {
+  try {
+    const {
+      razorpay_order_id: orderId,
+      razorpay_payment_id: paymentId,
+      razorpay_signature: signature,
+    } = req.body;
+
+    if (!orderId || !paymentId || !signature) {
+      return res.status(400).json({ success: false, message: "Missing Razorpay payment details" });
+    }
+
+    const generatedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "")
+      .update(`${orderId}|${paymentId}`)
+      .digest("hex");
+
+    const isValid = generatedSignature === signature;
+    if (!isValid) {
+      return res.status(400).json({ success: false, message: "Invalid Razorpay signature" });
+    }
+
+    return res.json({
+      success: true,
+      payment: {
+        provider: "razorpay",
+        orderId,
+        paymentId,
+        signature,
+        status: "paid",
+        paidAt: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error("Razorpay verify error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to verify Razorpay payment",
+    });
+  }
+});
+
+app.delete("/api/account", verifyToken, async (req, res) => {
+  try {
+    const { confirmation, currentPassword } = req.body || {};
+    const user = await UserModel.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (confirmation !== "DELETE") {
+      return res.status(400).json({
+        success: false,
+        message: 'Type DELETE to confirm account deletion',
+      });
+    }
+
+    if (user.password && !isPasswordMatch(currentPassword || "", user.password)) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    const products = await RentProduct.find({ userId: user._id }).select("images");
+    const productIds = products.map((product) => product._id);
+    const uploadedProductImages = products.flatMap((product) => product.images || []);
+
+    await Promise.all([
+      Notification.deleteMany({ userId: user._id }),
+      Message.deleteMany({ $or: [{ sender: user._id }, { receiver: user._id }] }),
+      ChatMessage.deleteMany({ $or: [{ sender: user._id }, { receiver: user._id }] }),
+      RentalRequest.deleteMany({ $or: [{ requester: user._id }, { owner: user._id }, { product: { $in: productIds } }] }),
+      Rating.deleteMany({
+        $or: [
+          { rater: user._id },
+          { ratedUser: user._id },
+          { ratedProduct: { $in: productIds } },
+        ],
+      }),
+      RentProduct.deleteMany({ userId: user._id }),
+      UserModel.findByIdAndDelete(user._id),
+    ]);
+
+    await Promise.all([
+      removeUploadedFile(user.profilePhoto),
+      ...uploadedProductImages.map((imagePath) => removeUploadedFile(imagePath)),
+    ]);
+
+    return res.json({
+      success: true,
+      message: "Your account has been deleted",
+    });
+  } catch (error) {
+    console.error("Account deletion error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete account",
     });
   }
 });
@@ -1308,6 +1494,7 @@ app.post('/api/chatredirect/rental-requests', verifyToken, async (req, res) => {
 app.use("/uploads", express.static("uploads"));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/notifications", notificationRoutes); // Use the notification routes
+app.use("/api/invoices", invoiceRoutes);
 app.use('/api/rental-requests', rentalRequestsRouter);
 app.use("/api", productRoutes);
 app.use('/api', userManagementRoutes);

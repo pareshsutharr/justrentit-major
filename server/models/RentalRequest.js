@@ -24,7 +24,21 @@ const RentalRequestSchema = new mongoose.Schema({
     stage: String,
     timestamp: Date,
     description: String
-  }]
+  }],
+  invoiceNumber: {
+    type: String,
+    default: null,
+  },
+  payment: {
+    provider: { type: String, default: null },
+    orderId: { type: String, default: null },
+    paymentId: { type: String, default: null },
+    signature: { type: String, default: null },
+    amount: { type: Number, default: 0 },
+    currency: { type: String, default: 'INR' },
+    status: { type: String, default: 'pending' },
+    paidAt: { type: Date, default: null },
+  }
 }, { timestamps: true });
 
 // Static methods

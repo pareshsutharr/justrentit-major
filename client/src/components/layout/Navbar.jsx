@@ -148,6 +148,10 @@ const Navbar = () => {
       navigate("/dashboard", { state: { rentalRequest: true } });
       return;
     }
+    if (notification.type === "payment_done" || notification.type === "invoice_created") {
+      navigate("/dashboard", { state: { showInvoices: true } });
+      return;
+    }
     navigate("/dashboard");
   };
 

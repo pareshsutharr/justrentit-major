@@ -1,157 +1,304 @@
 import React from "react";
-import Swal from "sweetalert2";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import useRentalRequest from "./hooks/useRentalRequest";
 import PriceBreakdown from "./PriceBreakdown";
 import LoadingPage from "../../../loadingpages/LoadingForLocation";
+
+const statusLabel = {
+  pending: "Pending review",
+  approved: "Approved",
+  in_transit: "Shipped",
+  delivered: "Delivered",
+  in_use: "Active rental",
+  return_in_transit: "Returning",
+  returned: "Returned",
+  completed: "Completed",
+  rejected: "Rejected",
+};
+
+const InfoPill = ({ label, value }) => (
+  <div className="rounded-3 border border-gray-200 bg-white px-3 py-2">
+    <p className="mb-1 text-uppercase text-muted small fw-semibold">{label}</p>
+    <p className="mb-0 fw-semibold text-dark">{value}</p>
+  </div>
+);
+
+const BookingNotice = ({ title, body, tone = "light" }) => {
+  const tones = {
+    light: "border-primary-subtle bg-primary-subtle text-dark",
+    success: "border-success-subtle bg-success-subtle text-dark",
+    warning: "border-warning-subtle bg-warning-subtle text-dark",
+  };
+
+  return (
+    <div className={`rounded-4 border p-3 ${tones[tone] || tones.light}`}>
+      <p className="mb-1 fw-semibold">{title}</p>
+      <p className="mb-0 small">{body}</p>
+    </div>
+  );
+};
 
 const RentalRequestForm = ({ selectedProduct }) => {
   const {
     requestDates,
     setRequestDates,
     totalPrice,
+    payableAmount,
     error,
     isSubmitting,
     isOwner,
+    isAuthenticated,
     existingRequest,
+    hasPaidRequest,
     handleRequest,
     handleDelete,
   } = useRentalRequest(selectedProduct);
-
   const handleSubmit = async () => {
     try {
       await handleRequest();
-      toast.success("Rental request sent successfully!");
-    } catch (err) {
-      toast.error("Failed to send rental request. Please try again.");
+      toast.success("Payment completed and booking created.");
+    } catch {
+      toast.error("Unable to complete payment and request.");
     }
   };
 
-  if (isOwner)
+  if (!selectedProduct) return null;
+
+  if (isOwner) {
     return (
-      <div className="alert alert-warning mb-4">
-        You cannot send rental requests for your own products.
+      <div className="rounded-4 border border-warning-subtle bg-warning-subtle p-4">
+        <p className="mb-1 fw-semibold text-dark">Owner access</p>
+        <p className="mb-0 small text-muted">
+          You cannot create a rental request for your own product.
+        </p>
       </div>
     );
+  }
+
+  if (!selectedProduct.available && !existingRequest) {
+    return (
+      <div className="rounded-4 border border-secondary-subtle bg-light p-4">
+        <p className="mb-1 fw-semibold text-dark">Currently unavailable</p>
+        <p className="mb-0 small text-muted">
+          This item already has an active booking. Check back after it is returned.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-light p-4 rounded-3 mb-4 shadow-sm">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <span className="text-muted fs-5">
-          {selectedProduct.rentalDuration.charAt(0).toUpperCase() +
-            selectedProduct.rentalDuration.slice(1)}{" "}
-          Rate:
-        </span>
-        <h2 className="text-danger mb-0">₹{selectedProduct.rentalPrice}</h2>
-      </div>
-
-      {/* Show the last request details above the form */}
-      {existingRequest ? (
-        <div className="alert alert-info p-3 mb-3">
-          <h5 className="mb-3">Your Rental Request</h5>
-          <div className="mb-2">
-            <strong>Start Date:</strong>{" "}
-            {existingRequest?.startDate
-              ? new Date(existingRequest.startDate).toLocaleDateString()
-              : "N/A"}
+    <section className="rounded-4 border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="border-bottom border-gray-100 bg-light px-4 py-4">
+        <div className="d-flex flex-column flex-lg-row justify-content-between gap-3">
+          <div>
+            <p className="mb-1 text-uppercase text-muted small fw-semibold">Booking & Payment</p>
+            <h3 className="mb-1 h4 fw-bold text-dark">Reserve this product</h3>
+            <p className="mb-0 small text-muted">
+              Choose dates, review the amount, then finish the Razorpay test payment to activate the request.
+            </p>
           </div>
-          <div className="mb-2">
-            <strong>End Date:</strong>{" "}
-            {existingRequest?.endDate
-              ? new Date(existingRequest.endDate).toLocaleDateString()
-              : "N/A"}
-          </div>
-          <div className="mb-3">
-            <strong>Message:</strong>
-            <div className="bg-white p-2 rounded mt-1" style={{ wordBreak: "break-word", whiteSpace: "normal" }}>
-              {existingRequest.message || "No message provided"}
-            </div>
-          </div>
-          <small className="text-muted">
-            <i className="bi bi-clock-history me-1"></i>
-            First message sent on{" "}
-            {existingRequest.createdAt
-              ? new Date(existingRequest.createdAt).toLocaleString()
-              : "N/A"}
-          </small>
-          <div className="d-flex gap-2 mt-3">
-            <button className="btn btn-outline-danger" onClick={handleDelete}>
-              <i className="bi bi-trash me-2"></i>
-              Delete Request
-            </button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Rental Request Form */}
-          <h4 className="mb-3">Submit a New Rental Request</h4>
-          <div className="date-picker-group mb-3">
-            <div className="form-group">
-              <label>Start Date</label>
-              <input
-                type="date"
-                value={requestDates.start || ""}
-                onChange={(e) =>
-                  setRequestDates({ ...requestDates, start: e.target.value })
-                }
-                className="form-control"
-                min={new Date().toISOString().split("T")[0]}
-              />
-            </div>
-            <div className="form-group">
-              <label>End Date</label>
-              <input
-                type="date"
-                value={requestDates.end || ""}
-                onChange={(e) =>
-                  setRequestDates({ ...requestDates, end: e.target.value })
-                }
-                className="form-control"
-                min={requestDates.start || new Date().toISOString().split("T")[0]}
-              />
-            </div>
-          </div>
-
-          {error && <div className="alert alert-danger">{error}</div>}
-
-          <div className="mb-3">
-            <label>Message to Owner</label>
-            <textarea
-              value={requestDates.message || ""}
-              onChange={(e) =>
-                setRequestDates({ ...requestDates, message: e.target.value })
-              }
-              className="form-control"
-              placeholder="Add a message..."
-              rows="3"
+          <div className="d-grid gap-2" style={{ minWidth: "210px" }}>
+            <InfoPill
+              label={`${selectedProduct.rentalDuration} rate`}
+              value={`₹${selectedProduct.rentalPrice}`}
             />
           </div>
+        </div>
+      </div>
 
-          <PriceBreakdown
-            totalPrice={totalPrice}
-            securityDeposit={selectedProduct.securityDeposit}
+      <div className="p-4">
+        {!isAuthenticated && (
+          <BookingNotice
+            title="Login required"
+            body="Please sign in before starting a booking request."
+            tone="warning"
           />
+        )}
 
-          <button
-            onClick={handleSubmit}
-            className="btn btn-primary w-100 rounded-pill py-3 fw-bold"
-            disabled={isSubmitting || !!error}
-          >
-            {isSubmitting ? (
-              <div className="spinner-border spinner-border-sm" role="status">
-                <span className="visually-hidden"><LoadingPage/></span>
+        {existingRequest ? (
+          <div className="d-grid gap-3">
+            <BookingNotice
+              title={hasPaidRequest ? "Payment completed" : "Request already created"}
+              body={
+                hasPaidRequest
+                  ? `Your payment is done. Invoice ${existingRequest.invoiceNumber || "is being generated"} and active rental details are available in the dashboard.`
+                  : "You already have an active request for this product. You can review or delete it below."
+              }
+              tone={hasPaidRequest ? "success" : "light"}
+            />
+
+            <div className="row g-3">
+              <div className="col-md-4">
+                <InfoPill
+                  label="Start date"
+                  value={existingRequest?.startDate ? new Date(existingRequest.startDate).toLocaleDateString() : "N/A"}
+                />
               </div>
-            ) : (
-              <>
-                <i className="bi bi-send me-2"></i>
-                Submit Request
-              </>
+              <div className="col-md-4">
+                <InfoPill
+                  label="End date"
+                  value={existingRequest?.endDate ? new Date(existingRequest.endDate).toLocaleDateString() : "N/A"}
+                />
+              </div>
+              <div className="col-md-4">
+                <InfoPill
+                  label="Status"
+                  value={statusLabel[existingRequest?.status] || existingRequest?.status || "Active"}
+                />
+              </div>
+            </div>
+
+            {existingRequest?.message && (
+              <div className="rounded-4 border border-gray-200 bg-light p-3">
+                <p className="mb-1 text-uppercase text-muted small fw-semibold">Message</p>
+                <p className="mb-0 small text-dark">{existingRequest.message}</p>
+              </div>
             )}
-          </button>
-        </>
-      )}
-    </div>
+
+            {existingRequest?.payment?.amount > 0 && (
+              <div className="rounded-4 border border-primary-subtle bg-primary-subtle p-3">
+                <div className="d-flex flex-column flex-md-row justify-content-between gap-2">
+                  <div>
+                    <p className="mb-1 fw-semibold text-dark">Payment Summary</p>
+                    <p className="mb-0 small text-muted">
+                      Paid amount: ₹{existingRequest.payment.amount}
+                    </p>
+                  </div>
+                  {existingRequest?.invoiceNumber && (
+                    <p className="mb-0 small fw-semibold text-primary">
+                      Invoice {existingRequest.invoiceNumber}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!hasPaidRequest && (
+              <div className="d-flex gap-2 justify-content-end">
+                <button type="button" className="btn btn-outline-danger rounded-pill px-4" onClick={handleDelete}>
+                  Delete Request
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="d-grid gap-4">
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label small text-muted fw-semibold">Start Date</label>
+                <input
+                  type="date"
+                  value={requestDates.start || ""}
+                  onChange={(event) =>
+                    setRequestDates({ ...requestDates, start: event.target.value })
+                  }
+                  className="form-control form-control-lg rounded-4"
+                  min={new Date().toISOString().split("T")[0]}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label small text-muted fw-semibold">End Date</label>
+                <input
+                  type="date"
+                  value={requestDates.end || ""}
+                  onChange={(event) =>
+                    setRequestDates({ ...requestDates, end: event.target.value })
+                  }
+                  className="form-control form-control-lg rounded-4"
+                  min={requestDates.start || new Date().toISOString().split("T")[0]}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="form-label small text-muted fw-semibold">Message to owner</label>
+              <textarea
+                value={requestDates.message || ""}
+                onChange={(event) =>
+                  setRequestDates({ ...requestDates, message: event.target.value })
+                }
+                className="form-control rounded-4"
+                placeholder="Share delivery notes, purpose, or any booking context..."
+                rows="4"
+              />
+            </div>
+
+            {error && (
+              <div className="rounded-4 border border-danger-subtle bg-danger-subtle px-3 py-2 small text-danger-emphasis">
+                {error}
+              </div>
+            )}
+
+            <div className="rounded-4 border border-gray-200 bg-light p-3">
+              <div className="row g-3">
+                <div className="col-md-7">
+                  <PriceBreakdown
+                    totalPrice={totalPrice}
+                    securityDeposit={selectedProduct.securityDeposit}
+                  />
+                </div>
+                <div className="col-md-5">
+                  <div className="rounded-4 bg-white border border-gray-200 p-3 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                      <p className="mb-1 fw-semibold text-dark">What happens next</p>
+                      <ul className="mb-0 ps-3 small text-muted">
+                        <li>Open Razorpay test mode</li>
+                        <li>Complete the test payment</li>
+                        <li>Request activates and invoice appears in dashboard</li>
+                      </ul>
+                    </div>
+                    <p className="mb-0 mt-3 small fw-semibold text-primary">
+                      Total payable now: ₹{payableAmount}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="d-flex justify-content-end">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting || !!error || !isAuthenticated}
+                className="btn border-0 rounded-pill px-4 px-md-5"
+                style={{
+                  minHeight: "62px",
+                  minWidth: "280px",
+                  background: isSubmitting || !!error || !isAuthenticated
+                    ? "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)"
+                    : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                  color: "#ffffff",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  letterSpacing: "0.01em",
+                  boxShadow: isSubmitting || !!error || !isAuthenticated
+                    ? "none"
+                    : "0 18px 38px rgba(22, 163, 74, 0.22)",
+                }}
+              >
+                {isSubmitting ? (
+                  <span className="d-inline-flex align-items-center gap-2">
+                    <span className="spinner-border spinner-border-sm" role="status" />
+                    <span className="visually-hidden"><LoadingPage /></span>
+                    Processing payment...
+                  </span>
+                ) : (
+                  <span className="d-inline-flex align-items-center gap-2">
+                    <span
+                      className="d-inline-flex align-items-center justify-content-center rounded-circle bg-white bg-opacity-25"
+                      style={{ width: "36px", height: "36px" }}
+                    >
+                      <i className="bi bi-credit-card fs-5"></i>
+                    </span>
+                    <span>Pay & Confirm Booking</span>
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
   );
 };
 

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import AppLayout from '../../components/layout/AppLayout';
 import { FiStar, FiMapPin, FiPhoneCall, FiMail, FiShield, FiHeart } from 'react-icons/fi';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import {
   formatINR,
   getApiBaseUrl,
@@ -10,16 +11,19 @@ import {
   normalizeDetailProduct
 } from '../../utils/productHelpers';
 import { isFavoriteProduct, toggleFavoriteProduct } from '../../utils/favorites';
+import RentalRequestForm from '../../components/products/filter/ProductModal/RentalRequestForm';
 
 const baseUrl = getApiBaseUrl();
 
 const ProductPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -69,6 +73,26 @@ const ProductPage = () => {
     return () => window.removeEventListener("favorites:changed", sync);
   }, [id]);
 
+  useEffect(() => {
+    if (searchParams.get('payment') !== 'success') return;
+
+    const invoiceNumber = searchParams.get('invoice');
+    Swal.fire({
+      icon: 'success',
+      title: 'Payment Done',
+      text: invoiceNumber
+        ? `Your payment was completed successfully. Invoice ${invoiceNumber} is available in the dashboard.`
+        : 'Your payment was completed successfully.',
+      confirmButtonColor: '#00a877',
+    }).then(() => {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('payment');
+      nextParams.delete('invoice');
+      nextParams.delete('requestId');
+      setSearchParams(nextParams, { replace: true });
+    });
+  }, [searchParams, setSearchParams]);
+
   const handleFavoriteToggle = () => {
     if (!product?._id) return;
     const updatedFavorites = toggleFavoriteProduct(product._id);
@@ -81,14 +105,16 @@ const ProductPage = () => {
       navigate("/login");
       return;
     }
+    const owner = product?.authorDetails || product?.userId || {};
     if (!product?.chatUserId) return;
 
     window.dispatchEvent(
       new CustomEvent("chat:open-user", {
         detail: {
           _id: product.chatUserId,
-          name: product.authorDetails?.name || "Owner",
-          profilePhoto: product.authorDetails?.profilePhoto || "",
+          name: owner?.name || "Owner",
+          profilePhoto: owner?.profilePhoto || "",
+          email: owner?.email || "",
         },
       })
     );
@@ -218,33 +244,79 @@ const ProductPage = () => {
                   </div>
                </div>
 
-               {/* Actions */}
-               <div className="mt-auto">
-                 <div className="grid grid-cols-2 gap-4 mb-4">
+               <div className="rounded-3xl border border-gray-100 bg-gray-50 p-5">
+                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                   <div>
+                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-2">
+                       Booking Flow
+                     </p>
+                     <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                       Request and pay from one place
+                     </h3>
+                     <p className="text-sm text-gray-500 mb-0">
+                       Choose dates below, complete the test payment, and the booking activates immediately.
+                     </p>
+                   </div>
+                   <button
+                     onClick={() => setBookingOpen(true)}
+                     className="inline-flex items-center justify-center px-5 py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl transition-colors shadow-lg shadow-primary/20"
+                   >
+                     Start Booking
+                   </button>
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4 mt-4">
                     <button 
                       onClick={handleOpenMessageChat}
                       disabled={!product.chatUserId}
-                      className="flex items-center justify-center gap-2 py-4 bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium rounded-xl transition-colors"
+                      className="flex items-center justify-center gap-2 py-4 bg-white hover:bg-gray-100 text-gray-900 font-medium rounded-xl transition-colors border border-gray-200"
                     >
-                       <FiMail /> message
+                       <FiMail /> Message
                     </button>
                     <button 
                       onClick={() => product.authorDetails?.phone && (window.location.href = `tel:${product.authorDetails.phone}`)}
                       disabled={!product.authorDetails?.phone}
-                      className="flex items-center justify-center gap-2 py-4 bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium rounded-xl transition-colors"
+                      className="flex items-center justify-center gap-2 py-4 bg-white hover:bg-gray-100 text-gray-900 font-medium rounded-xl transition-colors border border-gray-200"
                     >
-                       <FiPhoneCall /> call
+                       <FiPhoneCall /> Call
                     </button>
                  </div>
-                 <button className="w-full flex items-center justify-center py-4 bg-primary hover:bg-primary-hover text-white font-bold rounded-xl transition-colors shadow-lg shadow-primary/30">
-                    Request to Book
-                 </button>
                </div>
             </div>
 
           </div>
+
         </div>
       </div>
+
+      {bookingOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 px-4 py-6">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[28px] bg-white shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setBookingOpen(false)}
+              className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
+              aria-label="Close booking"
+            >
+              ×
+            </button>
+
+            <div className="border-b border-gray-100 px-6 py-5 sm:px-8">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                Start Booking
+              </p>
+              <h2 className="mb-1 text-2xl font-bold text-gray-900">{product.name}</h2>
+              <p className="mb-0 text-sm text-gray-500">
+                Choose rental dates, add your note, and send the booking request from this popup.
+              </p>
+            </div>
+
+            <div className="px-6 py-6 sm:px-8">
+              <RentalRequestForm selectedProduct={product} />
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 };

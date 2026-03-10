@@ -70,6 +70,14 @@ export const normalizeDetailProduct = (product, categoryMap = new Map()) => {
 
   return {
     ...normalized,
+    securityDeposit: Number(product?.securityDeposit ?? 0),
+    userId: {
+      _id: chatUserId,
+      name: author?.name || "Owner",
+      profilePhoto: author?.profilePhoto || "",
+      email: author?.email || "",
+      phone: author?.phone || "",
+    },
     verified: Boolean(product?.verified),
     chatUserId,
     authorDetails: {

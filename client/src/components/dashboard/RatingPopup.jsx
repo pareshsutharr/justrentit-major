@@ -19,6 +19,7 @@ const RatingPopup = ({ request, userId, onClose }) => {
   });
 
   useEffect(() => {
+    if (!request?._id) return;
     const checkPendingRatings = async () => {
       try {
         const res = await axios.get(
@@ -36,10 +37,18 @@ const RatingPopup = ({ request, userId, onClose }) => {
     };
 
     checkPendingRatings();
-  }, [request._id]);
+  }, [request?._id]);
+
+  const ownerName = request?.owner?.name || "Owner";
+  const renterName = request?.requester?.name || "Renter";
+  const productName = request?.product?.name || "Product";
 
   const handleSubmit = async (type) => {
     try {
+      if (!request?._id) {
+        Swal.fire("Error!", "Rental request details are unavailable", "error");
+        return;
+      }
       if (!ratings[type].value) {
         Swal.fire(
           "Error!",
@@ -58,10 +67,20 @@ const RatingPopup = ({ request, userId, onClose }) => {
       };
 
       if (type === "product") {
+        if (!request?.product?._id) {
+          Swal.fire("Error!", "Product details are unavailable", "error");
+          return;
+        }
         payload.ratedProduct = request.product._id;
       } else {
+        const targetUserId =
+          type === "owner" ? request?.owner?._id : request?.requester?._id;
+        if (!targetUserId) {
+          Swal.fire("Error!", "User details are unavailable", "error");
+          return;
+        }
         payload.ratedUser =
-          type === "owner" ? request.owner._id : request.requester._id;
+          targetUserId;
       }
 
       await axios.post(`${baseUrl}/api/ratings`, payload, {
@@ -97,7 +116,7 @@ const RatingPopup = ({ request, userId, onClose }) => {
     >
       {ratingsToSubmit.owner && (
         <div className="mb-4">
-          <h4>Rate Owner ({request.owner.name})</h4>
+          <h4>Rate Owner ({ownerName})</h4>
           <Rating
             value={ratings.owner.value}
             onChange={(value) =>
@@ -130,7 +149,7 @@ const RatingPopup = ({ request, userId, onClose }) => {
 
       {ratingsToSubmit.product && (
         <div className="mb-4">
-          <h4>Rate Product ({request.product.name})</h4>
+          <h4>Rate Product ({productName})</h4>
           <Rating
             value={ratings.product.value}
             onChange={(value) =>
@@ -163,7 +182,7 @@ const RatingPopup = ({ request, userId, onClose }) => {
 
       {ratingsToSubmit.renter && (
         <div className="mb-4">
-          <h4>Rate Renter ({request.requester.name})</h4>
+          <h4>Rate Renter ({renterName})</h4>
           <Rating
             value={ratings.renter.value}
             onChange={(value) =>

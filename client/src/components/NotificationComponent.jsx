@@ -77,6 +77,9 @@ const NotificationComponent = ({ userId }) => {
     if (notification.type === "product_request_send") {
       navigate("/dashboard", { state: { rentalRequest: true } });
     }
+    if (notification.type === "payment_done" || notification.type === "invoice_created") {
+      navigate("/dashboard", { state: { showInvoices: true } });
+    }
   };
 
   useEffect(() => {

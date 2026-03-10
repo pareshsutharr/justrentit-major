@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import { collectTestModePayment } from '../../../../../utils/paymentLink';
+
+const readStoredUser = () => {
+  try {
+    const raw = localStorage.getItem("user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
 
 const useRentalRequest = (selectedProduct) => {
   const [requestDates, setRequestDates] = useState({ start: "", end: "", message: "" });
@@ -10,8 +20,9 @@ const useRentalRequest = (selectedProduct) => {
   const [requestSubmitted, setRequestSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const userId = JSON.parse(localStorage.getItem("user"));
+  const userId = readStoredUser();
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const checkOwnershipAndRequests = async () => {
@@ -83,6 +94,18 @@ const useRentalRequest = (selectedProduct) => {
     calculatePrice();
   }, [requestDates.start, requestDates.end]);
 
+  const payableAmount = totalPrice + Number(selectedProduct?.securityDeposit || 0);
+  const hasPaidRequest = existingRequest?.payment?.status === "paid";
+
+  const collectRazorpayPayment = async () => {
+    if (payableAmount <= 0) return null;
+    if (!token) throw new Error("Please login to continue with payment");
+    return collectTestModePayment({
+      amount: payableAmount,
+      productName: selectedProduct?.name,
+    });
+  };
+
   const handleRequest = async () => {
     if (!userId) return alert("Please login to send request");
     if (isOwner) return;
@@ -105,6 +128,7 @@ const useRentalRequest = (selectedProduct) => {
           }
         );
       } else {
+        const payment = await collectRazorpayPayment();
         response = await fetch(`${baseUrl}/api/rental-requests`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -115,6 +139,7 @@ const useRentalRequest = (selectedProduct) => {
             startDate: new Date(requestDates.start),
             endDate: new Date(requestDates.end),
             message: requestDates.message,
+            payment,
           }),
         });
       }
@@ -124,6 +149,16 @@ const useRentalRequest = (selectedProduct) => {
 
       setRequestSubmitted(true);
       setExistingRequest(data.request);
+
+      if (!existingRequest && data?.request?._id) {
+        const paymentStatus = data?.request?.payment?.status;
+        const invoiceNumber = data?.request?.invoiceNumber || "";
+        if (paymentStatus === "paid") {
+          const redirectUrl = `/product/${selectedProduct._id}?payment=success&invoice=${encodeURIComponent(invoiceNumber)}&requestId=${data.request._id}`;
+          window.location.assign(redirectUrl);
+          return;
+        }
+      }
     } catch (error) {
       setError(error.message);
     } finally {
@@ -179,9 +214,12 @@ const useRentalRequest = (selectedProduct) => {
     error,
     isSubmitting,
     isOwner,
+    isAuthenticated: Boolean(userId && token),
     existingRequest,
     requestSubmitted,
     setRequestSubmitted,
+    payableAmount,
+    hasPaidRequest,
     handleRequest,
     handleDelete
   };
