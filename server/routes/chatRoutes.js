@@ -58,6 +58,8 @@ router.get('/:senderId/:receiverId', verifyToken, async (req, res) => {
         ]
       })
       .sort({ createdAt: 1 })
+      .populate('sender', 'name profilePhoto')
+      .populate('receiver', 'name profilePhoto')
       .lean();
   
       res.json(messages);
@@ -164,22 +166,40 @@ router.get('/users/:userId', verifyToken, async (req, res) => {
             ]
           }
         },
+        { $sort: { createdAt: -1 } },
         {
-          $group: {
-            _id: null,
-            users: {  // Changed from 'User' to 'users'
-              $addToSet: {
-                $cond: [
-                  { $eq: ["$sender", new mongoose.Types.ObjectId(userId)] },
-                  "$receiver",
-                  "$sender"
-                ]
-              }
+          $addFields: {
+            partnerId: {
+              $cond: [
+                { $eq: ["$sender", new mongoose.Types.ObjectId(userId)] },
+                "$receiver",
+                "$sender"
+              ]
+            },
+            isUnreadForUser: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$receiver", new mongoose.Types.ObjectId(userId)] },
+                    { $eq: ["$read", false] }
+                  ]
+                },
+                1,
+                0
+              ]
             }
           }
         },
-        { $unwind: "$users" },
-        { $group: { _id: "$users" } },
+        {
+          $group: {
+            _id: "$partnerId",
+            lastMessage: { $first: "$content" },
+            lastMessageType: { $first: "$messageType" },
+            lastMessageImageUrl: { $first: "$imageUrl" },
+            lastMessageAt: { $first: "$createdAt" },
+            unreadCount: { $sum: "$isUnreadForUser" }
+          }
+        },
         {
           $lookup: {
             from: 'users',
@@ -194,9 +214,19 @@ router.get('/users/:userId', verifyToken, async (req, res) => {
             _id: "$user._id",
             name: "$user.name",
             profilePhoto: "$user.profilePhoto",
-            email: "$user.email"
+            email: "$user.email",
+            lastMessage: {
+              $cond: [
+                { $eq: ["$lastMessageType", "image"] },
+                "Photo",
+                "$lastMessage"
+              ]
+            },
+            lastMessageAt: "$lastMessageAt",
+            unreadCount: "$unreadCount"
           }
-        }
+        },
+        { $sort: { lastMessageAt: -1 } }
       ]);
   
       res.json(chatUsers);
@@ -205,6 +235,33 @@ router.get('/users/:userId', verifyToken, async (req, res) => {
       res.status(500).json({ message: 'Server error' });
     }
   });
+
+router.patch('/read/:partnerId', verifyToken, async (req, res) => {
+  try {
+    const partnerId = req.params.partnerId;
+    const currentUserId = req.user._id.toString();
+
+    if (!mongoose.Types.ObjectId.isValid(partnerId)) {
+      return res.status(400).json({ message: 'Invalid partner ID format' });
+    }
+
+    await ChatMessage.updateMany(
+      {
+        sender: partnerId,
+        receiver: currentUserId,
+        read: false
+      },
+      {
+        $set: { read: true }
+      }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking chat as read:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
     router.get("/:id", verifyToken, async (req, res) => {
         try {
           const userId = req.params.id;

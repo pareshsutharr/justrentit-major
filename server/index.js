@@ -1368,6 +1368,34 @@ io.on('connection', (socket) => {
       console.error('Error sending message:', err);
     }
   });
+
+  socket.on('typing', ({ receiverId, isTyping }) => {
+    if (!receiverId) return;
+    io.to(receiverId).emit('typing', {
+      senderId: socket.user._id.toString(),
+      isTyping: Boolean(isTyping)
+    });
+  });
+
+  socket.on('seenMessages', async ({ partnerId }) => {
+    if (!partnerId) return;
+    try {
+      await ChatMessage.updateMany(
+        {
+          sender: partnerId,
+          receiver: socket.user._id,
+          read: false
+        },
+        { $set: { read: true } }
+      );
+      io.to(partnerId).emit('messagesSeen', {
+        seenBy: socket.user._id.toString(),
+        partnerId: partnerId.toString()
+      });
+    } catch (err) {
+      console.error('Error marking messages seen:', err);
+    }
+  });
  
 
   socket.on('disconnect', () => {

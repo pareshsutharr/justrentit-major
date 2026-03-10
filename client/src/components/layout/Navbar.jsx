@@ -4,6 +4,7 @@ import axios from "axios";
 import { FiBell, FiHeart, FiMenu, FiUser, FiX } from "react-icons/fi";
 import { getApiBaseUrl, getImageUrl } from "../../utils/productHelpers";
 import { getFavoriteProductIds } from "../../utils/favorites";
+import mainLogo from "../../../images/jri-logo.png";
 
 const baseUrl = getApiBaseUrl();
 const readStoredUser = () => {
@@ -167,8 +168,8 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center gap-8">
-            <Link to="/" onClick={closeAllMenus} className="font-bold text-2xl tracking-tight text-gray-900">
-              JustRent<span className="text-primary">It</span>
+            <Link to="/" onClick={closeAllMenus} className="inline-flex items-center">
+              <img src={mainLogo} alt="JustRentIt" className="h-10 w-auto" />
             </Link>
             <div className="hidden md:flex items-center gap-6">
               <NavLink to="/products" className="text-sm font-medium text-gray-600 hover:text-gray-900">

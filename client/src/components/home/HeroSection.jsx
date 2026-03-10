@@ -6,6 +6,7 @@ import cameraImage from '../../assets/camera.png';
 import tentImage from '../../assets/tant.png';
 import chairImage from '../../assets/chair.png';
 import shoesImage from '../../assets/shoes.png';
+import cam2 from '../../assets/camera2.png'
 import { getApiBaseUrl, getImageUrl } from '../../utils/productHelpers';
 
 const heroSlides = [
@@ -13,6 +14,7 @@ const heroSlides = [
   tentImage,
   chairImage,
   shoesImage,
+  cam2,
 ];
 const baseUrl = getApiBaseUrl();
 
