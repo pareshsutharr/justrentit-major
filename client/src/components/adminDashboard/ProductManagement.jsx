@@ -8,6 +8,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     status: 'all',
@@ -19,6 +20,22 @@ const ProductManagement = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [editProduct, setEditProduct] = useState(null);
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}/api/categories`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        setCategories(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        toast.error('Failed to load categories');
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -100,9 +117,18 @@ const ProductManagement = () => {
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        name: editProduct.name,
+        description: editProduct.description,
+        rentalPrice: editProduct.rentalPrice,
+        category: Array.isArray(editProduct.category)
+          ? editProduct.category.map((item) => (typeof item === 'string' ? item : item._id))
+          : [],
+      };
+
       const response = await axios.put(
        `${baseUrl}/api/admin/products/${editProduct._id}`,
-        editProduct,
+        payload,
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
       setProducts(products.map(p => p._id === editProduct._id ? response.data : p));
@@ -280,7 +306,7 @@ const ProductManagement = () => {
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Rental Price ($/day)</Form.Label>
+              <Form.Label>Rental Price (₹/day)</Form.Label>
               <Form.Control
                 type="number"
                 min="0"
@@ -289,6 +315,30 @@ const ProductManagement = () => {
                 onChange={(e) => setEditProduct({...editProduct, rentalPrice: e.target.value})}
                 required
               />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Categories</Form.Label>
+              <Form.Select
+                multiple
+                value={Array.isArray(editProduct?.category)
+                  ? editProduct.category.map((item) => (typeof item === 'string' ? item : item._id))
+                  : []}
+                onChange={(e) => {
+                  const selectedValues = Array.from(e.target.selectedOptions, (option) => option.value);
+                  setEditProduct({ ...editProduct, category: selectedValues });
+                }}
+                style={{ minHeight: '160px' }}
+                required
+              >
+                {categories.map((category) => (
+                  <option key={category._id} value={category._id}>
+                    {category.name}
+                  </option>
+                ))}
+              </Form.Select>
+              <Form.Text className="text-muted">
+                Hold `Ctrl` or `Cmd` to select multiple categories.
+              </Form.Text>
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>

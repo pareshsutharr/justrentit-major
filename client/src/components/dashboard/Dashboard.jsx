@@ -4,7 +4,7 @@ import { useLocation, useNavigate, Link } from "react-router-dom";
 import {
   LayoutDashboard, Package, PlusSquare, ClipboardList,
   User, MessageSquare, ChevronLeft, ChevronRight,
-  TrendingUp, Star, DollarSign, Clock, CheckCircle,
+  TrendingUp, Star, IndianRupee, Clock, CheckCircle,
   ArrowRight, Menu, X, Home, FileText,
 } from "lucide-react";
 import RentProductForm from "./RentProductForm";
@@ -92,7 +92,7 @@ const DashboardOverview = ({ stats, onNavigate }) => {
       color: "bg-amber-50 text-amber-500",
     },
     {
-      icon: DollarSign, label: "Est. Earnings",
+      icon: IndianRupee, label: "Est. Earnings",
       value: stats.estimatedEarnings ? `₹${stats.estimatedEarnings.toFixed(0)}` : "₹0",
       color: "bg-emerald-50 text-emerald-600",
     },

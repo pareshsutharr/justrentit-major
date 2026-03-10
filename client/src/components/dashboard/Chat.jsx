@@ -7,7 +7,7 @@ import { MdDelete } from "react-icons/md";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { FaSearch } from "react-icons/fa";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
-const Chat = () => {
+const Chat = ({ initialReceiverId = "" }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [receiverId, setReceiverId] = useState("");
@@ -23,11 +23,12 @@ const Chat = () => {
 const [isUploading, setIsUploading] = useState(false);
 
   const token = localStorage.getItem("token");
+
   useEffect(() => {
-    if (receiverId) {
-      setReceiverId(receiverId);
+    if (initialReceiverId) {
+      setReceiverId(String(initialReceiverId));
     }
-  }, [receiverId]);
+  }, [initialReceiverId]);
   useEffect(() => {
     return () => {
       // Clear receiverId when leaving chat

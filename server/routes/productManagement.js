@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { adminCheck, verifyToken } = require('../middleware/auth');
 const RentProduct = require('../models/RentProduct');
+const Category = require('../models/Category');
 // Product Management Routes
 router.get('/admin/products', adminCheck, verifyToken, async (req, res) => {
     try {
@@ -59,11 +60,45 @@ router.get('/admin/products', adminCheck, verifyToken, async (req, res) => {
   
   router.put('/admin/products/:id',  adminCheck, verifyToken, async (req, res) => {
     try {
+      const updates = {};
+      const { name, description, rentalPrice, category } = req.body || {};
+
+      if (typeof name === 'string' && name.trim()) {
+        updates.name = name.trim();
+      }
+
+      if (typeof description === 'string' && description.trim()) {
+        updates.description = description.trim();
+      }
+
+      if (rentalPrice !== undefined) {
+        const parsedPrice = Number(rentalPrice);
+        if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+          return res.status(400).json({ error: 'Invalid rental price' });
+        }
+        updates.rentalPrice = parsedPrice;
+      }
+
+      if (Array.isArray(category)) {
+        const validCategories = await Category.find({ _id: { $in: category } }).select('_id').lean();
+        if (validCategories.length !== category.length) {
+          return res.status(400).json({ error: 'One or more categories are invalid' });
+        }
+        updates.category = category;
+      }
+
       const product = await RentProduct.findByIdAndUpdate(
         req.params.id,
-        req.body,
+        updates,
         { new: true }
-      );
+      )
+        .populate('userId', 'name email')
+        .populate('category', 'name');
+
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
       res.json(product);
     } catch (error) {
       res.status(500).json({ error: 'Update failed' });
