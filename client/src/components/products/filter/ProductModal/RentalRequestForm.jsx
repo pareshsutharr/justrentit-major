@@ -1,39 +1,46 @@
 import React from "react";
 import { toast } from "react-toastify";
+import { Calendar, CreditCard, ShieldCheck, Info, MessageSquare, Trash2, CheckCircle, Clock, Truck, PlayCircle, RotateCcw, CheckCircle2 } from "lucide-react";
 import useRentalRequest from "./hooks/useRentalRequest";
 import PriceBreakdown from "./PriceBreakdown";
 import LoadingPage from "../../../loadingpages/LoadingForLocation";
 
 const statusLabel = {
-  pending: "Pending review",
-  approved: "Approved",
-  in_transit: "Shipped",
-  delivered: "Delivered",
-  in_use: "Active rental",
-  return_in_transit: "Returning",
-  returned: "Returned",
-  completed: "Completed",
-  rejected: "Rejected",
+  pending: { label: "Pending Review", color: "amber", icon: Clock },
+  approved: { label: "Approved", color: "emerald", icon: CheckCircle2 },
+  in_transit: { label: "In Transit", color: "indigo", icon: Truck },
+  delivered: { label: "Delivered", color: "emerald", icon: CheckCircle2 },
+  in_use: { label: "Actively Rented", color: "indigo", icon: PlayCircle },
+  return_in_transit: { label: "Returning", color: "amber", icon: RotateCcw },
+  returned: { label: "Returned", color: "slate", icon: CheckCircle },
+  completed: { label: "Booking Finished", color: "slate", icon: CheckCircle },
+  rejected: { label: "Request Denied", color: "red", icon: Info },
 };
 
 const InfoPill = ({ label, value }) => (
-  <div className="rounded-3 border border-gray-200 bg-white px-3 py-2">
-    <p className="mb-1 text-uppercase text-muted small fw-semibold">{label}</p>
-    <p className="mb-0 fw-semibold text-dark">{value}</p>
+  <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm group hover:border-indigo-100 transition-colors">
+    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1.5">{label}</p>
+    <p className="text-sm text-slate-900 font-bold tracking-tight">{value}</p>
   </div>
 );
 
-const BookingNotice = ({ title, body, tone = "light" }) => {
-  const tones = {
-    light: "border-primary-subtle bg-primary-subtle text-dark",
-    success: "border-success-subtle bg-success-subtle text-dark",
-    warning: "border-warning-subtle bg-warning-subtle text-dark",
+const BookingNotice = ({ title, body, variant = "indigo" }) => {
+  const styles = {
+    indigo: "bg-indigo-50 border-indigo-100 text-indigo-900",
+    emerald: "bg-emerald-50 border-emerald-100 text-emerald-900",
+    amber: "bg-amber-50 border-amber-100 text-amber-900",
+    red: "bg-red-50 border-red-100 text-red-900",
   };
 
   return (
-    <div className={`rounded-4 border p-3 ${tones[tone] || tones.light}`}>
-      <p className="mb-1 fw-semibold">{title}</p>
-      <p className="mb-0 small">{body}</p>
+    <div className={`p-5 rounded-[2rem] border ${styles[variant]} flex gap-4 items-start`}>
+      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm">
+        <Info size={18} className={variant === 'red' ? 'text-red-500' : 'text-indigo-500'} />
+      </div>
+      <div>
+        <p className="text-sm font-bold tracking-tight mb-1">{title}</p>
+        <p className="text-xs font-medium opacity-80 leading-relaxed">{body}</p>
+      </div>
     </div>
   );
 };
@@ -53,12 +60,13 @@ const RentalRequestForm = ({ selectedProduct }) => {
     handleRequest,
     handleDelete,
   } = useRentalRequest(selectedProduct);
+
   const handleSubmit = async () => {
     try {
       await handleRequest();
-      toast.success("Payment completed and booking created.");
+      toast.success("Payment secured. Request is now active.");
     } catch {
-      toast.error("Unable to complete payment and request.");
+      toast.error("Transactional failed. Please retry.");
     }
   };
 
@@ -66,239 +74,199 @@ const RentalRequestForm = ({ selectedProduct }) => {
 
   if (isOwner) {
     return (
-      <div className="rounded-4 border border-warning-subtle bg-warning-subtle p-4">
-        <p className="mb-1 fw-semibold text-dark">Owner access</p>
-        <p className="mb-0 small text-muted">
-          You cannot create a rental request for your own product.
-        </p>
-      </div>
+      <BookingNotice
+        title="Owner Restriction"
+        body="You are the architect of this listing. Creators cannot rent their own assets."
+        variant="amber"
+      />
     );
   }
 
   if (!selectedProduct.available && !existingRequest) {
     return (
-      <div className="rounded-4 border border-secondary-subtle bg-light p-4">
-        <p className="mb-1 fw-semibold text-dark">Currently unavailable</p>
-        <p className="mb-0 small text-muted">
-          This item already has an active booking. Check back after it is returned.
-        </p>
-      </div>
+      <BookingNotice
+        title="Listing Busy"
+        body="This asset is currently in use by another member. Subscribe to notifications to know when it returns."
+        variant="amber"
+      />
     );
   }
 
   return (
-    <section className="rounded-4 border border-gray-200 bg-white shadow-sm overflow-hidden">
-      <div className="border-bottom border-gray-100 bg-light px-4 py-4">
-        <div className="d-flex flex-column flex-lg-row justify-content-between gap-3">
-          <div>
-            <p className="mb-1 text-uppercase text-muted small fw-semibold">Booking & Payment</p>
-            <h3 className="mb-1 h4 fw-bold text-dark">Reserve this product</h3>
-            <p className="mb-0 small text-muted">
-              Choose dates, review the amount, then finish the Razorpay test payment to activate the request.
-            </p>
-          </div>
-          <div className="d-grid gap-2" style={{ minWidth: "210px" }}>
-            <InfoPill
-              label={`${selectedProduct.rentalDuration} rate`}
-              value={`₹${selectedProduct.rentalPrice}`}
-            />
-          </div>
-        </div>
-      </div>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      <div className="p-4">
-        {!isAuthenticated && (
+      {!isAuthenticated && (
+        <BookingNotice
+          title="Identity Required"
+          body="You must be authenticated to initiate a reservation. Secure your session to proceed."
+          variant="amber"
+        />
+      )}
+
+      {existingRequest ? (
+        <div className="space-y-8">
           <BookingNotice
-            title="Login required"
-            body="Please sign in before starting a booking request."
-            tone="warning"
+            title={hasPaidRequest ? "Transaction Verified" : "Reservation Sequence Active"}
+            body={
+              hasPaidRequest
+                ? `Subscription confirmed. Invoice ${existingRequest.invoiceNumber || "generating"} and lifecycle tracking are available in your console.`
+                : "You have an active intent for this listing. Finalize payment or adjust your requirements below."
+            }
+            variant={hasPaidRequest ? "emerald" : "indigo"}
           />
-        )}
 
-        {existingRequest ? (
-          <div className="d-grid gap-3">
-            <BookingNotice
-              title={hasPaidRequest ? "Payment completed" : "Request already created"}
-              body={
-                hasPaidRequest
-                  ? `Your payment is done. Invoice ${existingRequest.invoiceNumber || "is being generated"} and active rental details are available in the dashboard.`
-                  : "You already have an active request for this product. You can review or delete it below."
-              }
-              tone={hasPaidRequest ? "success" : "light"}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <InfoPill
+              label="Initiation Date"
+              value={existingRequest?.startDate ? new Date(existingRequest.startDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : "N/A"}
             />
-
-            <div className="row g-3">
-              <div className="col-md-4">
-                <InfoPill
-                  label="Start date"
-                  value={existingRequest?.startDate ? new Date(existingRequest.startDate).toLocaleDateString() : "N/A"}
-                />
+            <InfoPill
+              label="Termination Date"
+              value={existingRequest?.endDate ? new Date(existingRequest.endDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : "N/A"}
+            />
+            <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl bg-${statusLabel[existingRequest?.status]?.color || 'indigo'}-50 flex items-center justify-center`}>
+                {React.createElement(statusLabel[existingRequest?.status]?.icon || Clock, { size: 18, className: `text-${statusLabel[existingRequest?.status]?.color || 'indigo'}-600` })}
               </div>
-              <div className="col-md-4">
-                <InfoPill
-                  label="End date"
-                  value={existingRequest?.endDate ? new Date(existingRequest.endDate).toLocaleDateString() : "N/A"}
-                />
-              </div>
-              <div className="col-md-4">
-                <InfoPill
-                  label="Status"
-                  value={statusLabel[existingRequest?.status] || existingRequest?.status || "Active"}
-                />
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">State</p>
+                <p className="text-sm text-slate-900 font-bold tracking-tight">{statusLabel[existingRequest?.status]?.label || "Active"}</p>
               </div>
             </div>
-
-            {existingRequest?.message && (
-              <div className="rounded-4 border border-gray-200 bg-light p-3">
-                <p className="mb-1 text-uppercase text-muted small fw-semibold">Message</p>
-                <p className="mb-0 small text-dark">{existingRequest.message}</p>
-              </div>
-            )}
-
-            {existingRequest?.payment?.amount > 0 && (
-              <div className="rounded-4 border border-primary-subtle bg-primary-subtle p-3">
-                <div className="d-flex flex-column flex-md-row justify-content-between gap-2">
-                  <div>
-                    <p className="mb-1 fw-semibold text-dark">Payment Summary</p>
-                    <p className="mb-0 small text-muted">
-                      Paid amount: ₹{existingRequest.payment.amount}
-                    </p>
-                  </div>
-                  {existingRequest?.invoiceNumber && (
-                    <p className="mb-0 small fw-semibold text-primary">
-                      Invoice {existingRequest.invoiceNumber}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {!hasPaidRequest && (
-              <div className="d-flex gap-2 justify-content-end">
-                <button type="button" className="btn btn-outline-danger rounded-pill px-4" onClick={handleDelete}>
-                  Delete Request
-                </button>
-              </div>
-            )}
           </div>
-        ) : (
-          <div className="d-grid gap-4">
-            <div className="row g-3">
-              <div className="col-md-6">
-                <label className="form-label small text-muted fw-semibold">Start Date</label>
+
+          {existingRequest?.message && (
+            <div className="p-6 rounded-[1.5rem] bg-slate-50 border border-slate-100">
+              <div className="flex items-center gap-2 mb-3">
+                <MessageSquare size={14} className="text-indigo-600" />
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Communication Log</p>
+              </div>
+              <p className="text-sm text-slate-600 font-medium leading-relaxed italic">"{existingRequest.message}"</p>
+            </div>
+          )}
+
+          {existingRequest?.payment?.amount > 0 && (
+            <div className="p-6 rounded-[2rem] bg-indigo-600 text-white shadow-xl shadow-indigo-100 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1 opacity-70">Secured Amount</p>
+                <p className="text-2xl font-bold tracking-tight">₹{existingRequest.payment.amount.toLocaleString('en-IN')}</p>
+              </div>
+              {existingRequest?.invoiceNumber && (
+                <div className="text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Invoice ID</p>
+                  <p className="text-sm font-bold">{existingRequest.invoiceNumber}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!hasPaidRequest && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl border border-red-100 text-red-500 font-bold text-xs uppercase tracking-widest hover:bg-red-50 transition-all active:scale-95"
+              >
+                <Trash2 size={14} /> Terminate Request
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Commencement</label>
+              <div className="relative group">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
                 <input
                   type="date"
                   value={requestDates.start || ""}
-                  onChange={(event) =>
-                    setRequestDates({ ...requestDates, start: event.target.value })
-                  }
-                  className="form-control form-control-lg rounded-4"
+                  onChange={(e) => setRequestDates({ ...requestDates, start: e.target.value })}
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 text-sm font-bold text-slate-900 outline-none focus:border-indigo-200 focus:ring-4 focus:ring-indigo-50/50 transition-all"
                   min={new Date().toISOString().split("T")[0]}
                 />
               </div>
-              <div className="col-md-6">
-                <label className="form-label small text-muted fw-semibold">End Date</label>
+            </div>
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Termination</label>
+              <div className="relative group">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
                 <input
                   type="date"
                   value={requestDates.end || ""}
-                  onChange={(event) =>
-                    setRequestDates({ ...requestDates, end: event.target.value })
-                  }
-                  className="form-control form-control-lg rounded-4"
+                  onChange={(e) => setRequestDates({ ...requestDates, end: e.target.value })}
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 text-sm font-bold text-slate-900 outline-none focus:border-indigo-200 focus:ring-4 focus:ring-indigo-50/50 transition-all"
                   min={requestDates.start || new Date().toISOString().split("T")[0]}
                 />
               </div>
             </div>
+          </div>
 
-            <div>
-              <label className="form-label small text-muted fw-semibold">Message to owner</label>
+          <div className="space-y-3">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Communication Notes</label>
+            <div className="relative group">
+              <MessageSquare className="absolute left-4 top-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
               <textarea
                 value={requestDates.message || ""}
-                onChange={(event) =>
-                  setRequestDates({ ...requestDates, message: event.target.value })
-                }
-                className="form-control rounded-4"
-                placeholder="Share delivery notes, purpose, or any booking context..."
+                onChange={(e) => setRequestDates({ ...requestDates, message: e.target.value })}
+                className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 text-sm font-bold text-slate-900 outline-none focus:border-indigo-200 focus:ring-4 focus:ring-indigo-50/50 transition-all resize-none"
+                placeholder="Coordinate pickup or delivery specifics..."
                 rows="4"
               />
             </div>
+          </div>
 
-            {error && (
-              <div className="rounded-4 border border-danger-subtle bg-danger-subtle px-3 py-2 small text-danger-emphasis">
-                {error}
-              </div>
-            )}
+          {error && (
+            <BookingNotice title="Configuration Error" body={error} variant="red" />
+          )}
 
-            <div className="rounded-4 border border-gray-200 bg-light p-3">
-              <div className="row g-3">
-                <div className="col-md-7">
-                  <PriceBreakdown
-                    totalPrice={totalPrice}
-                    securityDeposit={selectedProduct.securityDeposit}
-                  />
+          <div className="p-8 rounded-[2.5rem] bg-slate-50 border border-slate-100 space-y-8">
+            <PriceBreakdown
+              totalPrice={totalPrice}
+              securityDeposit={selectedProduct.securityDeposit}
+            />
+
+            <div className="p-6 rounded-[2rem] bg-white border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <ShieldCheck size={24} />
                 </div>
-                <div className="col-md-5">
-                  <div className="rounded-4 bg-white border border-gray-200 p-3 h-100 d-flex flex-column justify-content-between">
-                    <div>
-                      <p className="mb-1 fw-semibold text-dark">What happens next</p>
-                      <ul className="mb-0 ps-3 small text-muted">
-                        <li>Open Razorpay test mode</li>
-                        <li>Complete the test payment</li>
-                        <li>Request activates and invoice appears in dashboard</li>
-                      </ul>
-                    </div>
-                    <p className="mb-0 mt-3 small fw-semibold text-primary">
-                      Total payable now: ₹{payableAmount}
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-sm font-bold tracking-tight text-slate-900">Encrypted Transaction</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Test Gateway Enabled</p>
                 </div>
               </div>
-            </div>
-
-            <div className="d-flex justify-content-end">
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting || !!error || !isAuthenticated}
-                className="btn border-0 rounded-pill px-4 px-md-5"
-                style={{
-                  minHeight: "62px",
-                  minWidth: "280px",
-                  background: isSubmitting || !!error || !isAuthenticated
-                    ? "linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)"
-                    : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
-                  color: "#ffffff",
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  letterSpacing: "0.01em",
-                  boxShadow: isSubmitting || !!error || !isAuthenticated
-                    ? "none"
-                    : "0 18px 38px rgba(22, 163, 74, 0.22)",
-                }}
-              >
-                {isSubmitting ? (
-                  <span className="d-inline-flex align-items-center gap-2">
-                    <span className="spinner-border spinner-border-sm" role="status" />
-                    <span className="visually-hidden"><LoadingPage /></span>
-                    Processing payment...
-                  </span>
-                ) : (
-                  <span className="d-inline-flex align-items-center gap-2">
-                    <span
-                      className="d-inline-flex align-items-center justify-content-center rounded-circle bg-white bg-opacity-25"
-                      style={{ width: "36px", height: "36px" }}
-                    >
-                      <i className="bi bi-credit-card fs-5"></i>
-                    </span>
-                    <span>Pay & Confirm Booking</span>
-                  </span>
-                )}
-              </button>
+              <div className="text-right">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Total Payable Now</p>
+                <p className="text-3xl font-black text-slate-900 tracking-tighter">₹{payableAmount.toLocaleString('en-IN')}</p>
+              </div>
             </div>
           </div>
-        )}
-      </div>
-    </section>
+
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting || !!error || !isAuthenticated}
+            className="w-full py-5 rounded-[2rem] bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg transition-all shadow-xl shadow-indigo-100 active:scale-[0.98] disabled:opacity-40 disabled:active:scale-100 flex items-center justify-center gap-4 group"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="w-6 h-6 rounded-full border-4 border-white/30 border-t-white animate-spin" />
+                <span>Securing Transaction…</span>
+              </>
+            ) : (
+              <>
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <CreditCard size={20} />
+                </div>
+                <span>Verify & Initiate Reservation</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+    </div>
   );
 };
 

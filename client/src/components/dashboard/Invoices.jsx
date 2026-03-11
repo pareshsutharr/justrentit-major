@@ -82,73 +82,98 @@ export default function Invoices() {
   }
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Test mode paid rentals with invoice details</p>
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 px-2">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Financial Records</h1>
+          <p className="text-base font-bold text-slate-400 mt-2 uppercase tracking-[0.2em] text-xs">Audit & Transact Rental Settlements</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="px-6 py-3 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-100">
+            <p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-0.5">Global Volume</p>
+            <p className="text-sm font-black text-white">{formatCurrency(invoices.reduce((acc, inv) => acc + (inv.payment?.amount || 0), 0))}</p>
+          </div>
+        </div>
       </div>
 
-      {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      {error && <div className="p-6 rounded-[2rem] bg-red-50 text-red-600 text-[11px] font-black uppercase tracking-widest border border-red-100 shadow-xl">{error}</div>}
 
       {!error && invoices.length === 0 && (
-        <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
-          No invoices available yet.
+        <div className="flex flex-col items-center justify-center py-32 px-8 bg-slate-50 rounded-[3rem] border border-slate-100 border-dashed">
+          <div className="w-20 h-20 rounded-[2.5rem] bg-indigo-50 flex items-center justify-center text-indigo-400 mb-6 shadow-inner">
+            <FileText size={32} strokeWidth={1.5} />
+          </div>
+          <p className="text-xl font-black text-slate-900 tracking-tight">Financial Slate Clear</p>
+          <p className="text-sm font-bold text-slate-400 mt-2 uppercase tracking-widest text-center max-w-sm">No transaction records detected in the audit logs.</p>
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-6">
         {invoices.map((invoice) => {
           const isRequester = String(invoice.requester?._id || "") === String(currentUserId);
           return (
-            <div key={invoice._id} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-gray-900">
-                    <FileText size={18} />
-                    <h2 className="text-base font-semibold">{invoice.invoiceNumber}</h2>
+            <div key={invoice._id} className="group relative bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-100/30 transition-all duration-500 overflow-hidden">
+              <div className="p-8">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                  {/* Ledger Identity */}
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 rounded-[1.5rem] bg-slate-50 flex items-center justify-center text-indigo-600 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                      <FileText size={24} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h2 className="text-lg font-black text-slate-900 tracking-tight">{invoice.invoiceNumber}</h2>
+                        <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest border border-emerald-100">
+                          Settled
+                        </span>
+                      </div>
+                      <p className="text-sm font-black text-slate-400 uppercase tracking-widest">{invoice.product?.name || "Unknown Asset"}</p>
+                    </div>
                   </div>
-                  <p className="mt-1 text-sm font-medium text-gray-900">{invoice.product?.name || "Unknown Product"}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(invoice.startDate).toLocaleDateString()} to {new Date(invoice.endDate).toLocaleDateString()}
-                  </p>
+
+                  {/* Dynamic Value */}
+                  <div className="flex flex-col lg:items-end gap-1">
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Transaction Volume</p>
+                    <p className="text-3xl font-black text-slate-900 tracking-tighter">
+                      {formatCurrency(invoice.payment?.amount)}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex flex-col items-start sm:items-end gap-2">
-                  <span className="inline-flex items-center rounded-full bg-primary-light px-3 py-1 text-xs font-medium text-primary">
-                    Test Payment Completed
-                  </span>
-                  <span className="text-lg font-bold text-gray-900">
-                    {formatCurrency(invoice.payment?.amount)}
-                  </span>
+                {/* Audit Grid */}
+                <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Account (User)</p>
+                    <p className="text-xs font-black text-slate-900">{invoice.requester?.name || "System Record"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Oracle (Owner)</p>
+                    <p className="text-xs font-black text-slate-900">{invoice.owner?.name || "System Record"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Timestamp</p>
+                    <p className="text-xs font-black text-slate-900">
+                      {new Date(invoice.payment?.paidAt || invoice.createdAt).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="mt-4 grid gap-3 rounded-xl bg-gray-50 p-4 text-sm text-gray-600 sm:grid-cols-3">
-                <div>
-                  <p className="text-xs text-gray-400">Customer</p>
-                  <p className="font-medium text-gray-900">{invoice.requester?.name || "Unknown"}</p>
+                <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-slate-50 pt-8">
+                  <div className="flex items-center gap-4">
+                    <div className="px-4 py-2 rounded-xl bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      Window: {new Date(invoice.startDate).toLocaleDateString()} - {new Date(invoice.endDate).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => downloadInvoice(invoice, isRequester)}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl bg-white border border-slate-200 px-8 py-4 text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] hover:border-indigo-600 hover:text-indigo-600 hover:shadow-xl transition-all active:scale-95"
+                  >
+                    <Download size={14} />
+                    Generate Audit Log (.TXT)
+                  </button>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-400">Owner</p>
-                  <p className="font-medium text-gray-900">{invoice.owner?.name || "Unknown"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400">Issued</p>
-                  <p className="font-medium text-gray-900">
-                    {new Date(invoice.payment?.paidAt || invoice.createdAt).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => downloadInvoice(invoice, isRequester)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  <Download size={16} />
-                  Download Invoice
-                </button>
               </div>
             </div>
           );

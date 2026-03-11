@@ -92,7 +92,7 @@ router.post('/', verifyToken, async (req, res) => {
     if (duplicate) {
       return res.status(409).json({ error: "Rating already submitted" });
     }
-    
+
     const newRating = new Rating({
       rater: req.user._id,
       rentalRequest,
@@ -104,7 +104,7 @@ router.post('/', verifyToken, async (req, res) => {
     });
 
     await newRating.save();
-    
+
     // Update relevant ratings
     if (type === 'product') {
       await updateProductRatings(ratedProduct);
@@ -140,5 +140,29 @@ async function updateUserRatings(userId) {
     ratings: stats[0]?.average || 0
   });
 }
+
+// Get product ratings
+router.get('/product/:productId', async (req, res) => {
+  try {
+    const ratings = await Rating.find({ ratedProduct: req.params.productId, type: 'product' })
+      .populate('rater', 'name profilePhoto')
+      .sort({ createdAt: -1 });
+    res.json(ratings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get user ratings
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const ratings = await Rating.find({ ratedUser: req.params.userId, type: 'user' })
+      .populate('rater', 'name profilePhoto')
+      .sort({ createdAt: -1 });
+    res.json(ratings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;

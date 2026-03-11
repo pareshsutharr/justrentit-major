@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
 import FilterSidebar from '../../components/filters/FilterSidebar';
 import ProductGrid from '../../components/products/ProductGrid';
-import { FiSearch, FiSliders } from 'react-icons/fi';
+import { FiSearch, FiSliders, FiX } from 'react-icons/fi';
 import axios from 'axios';
 import { useDebounce } from '../../hooks/useDebounce';
 import { getApiBaseUrl, normalizeListProduct } from '../../utils/productHelpers';
@@ -81,93 +81,118 @@ const SearchPage = () => {
 
   return (
     <AppLayout>
-      <div className="bg-white min-h-screen pt-8 pb-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          {/* Search Header Area */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-gray-100 pb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Explore Items</h1>
-              <p className="text-gray-500 mt-1">
-                {loading ? 'Finding items...' : `Showing ${filteredProducts.length} results`}
-              </p>
-            </div>
+      <div className="bg-white min-h-screen pt-12 pb-24 relative overflow-hidden">
+        {/* Subtle Background Mesh */}
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-50/50 blur-[100px] rounded-full -z-10" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan-50/50 blur-[100px] rounded-full -z-10" />
 
-            <div className="w-full md:w-auto flex gap-3">
-              <div className="relative flex-grow md:w-80">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiSearch className="text-gray-400" />
-                </div>
-                <input 
-                  type="text" 
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow"
-                  placeholder="Search items..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+
+          {/* Enhanced Search Header Area */}
+          <div className="mb-12">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
+              <div className="max-w-xl">
+                <h1 className="text-sm font-bold tracking-widest text-indigo-600 uppercase mb-3">Discovery</h1>
+                <h2 className="text-4xl font-bold text-slate-900 tracking-tight">Explore the Marketplace</h2>
+                <p className="text-lg text-slate-500 mt-3 leading-relaxed">
+                  {loading ? 'Analyzing the inventory...' : `Found ${filteredProducts.length} premium items available for rent.`}
+                </p>
               </div>
-              <button 
-                className="md:hidden flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-gray-700 font-medium"
-                onClick={() => setIsMobileFiltersOpen(true)}
-              >
-                <FiSliders /> Filters
-              </button>
+
+              <div className="w-full lg:w-auto flex gap-3">
+                <div className="relative flex-grow lg:w-[400px] group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                    <FiSearch className="w-5 h-5" />
+                  </div>
+                  <input
+                    type="text"
+                    className="block w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 outline-none transition-all placeholder:text-slate-400 font-medium text-slate-900"
+                    placeholder="Search by name, category, or brand..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      <FiX />
+                    </button>
+                  )}
+                </div>
+                <button
+                  className="lg:hidden flex items-center gap-2 px-6 py-3.5 bg-slate-900 rounded-2xl text-white font-bold transition-transform active:scale-95 shadow-lg shadow-slate-200"
+                  onClick={() => setIsMobileFiltersOpen(true)}
+                >
+                  <FiSliders /> Filters
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Main Layout Grid */}
-          <div className="flex flex-col md:flex-row gap-8">
-            {/* Sidebar Filters */}
-            <div className="hidden md:block w-64 shrink-0">
-              <FilterSidebar filters={filters} setFilters={setFilters} categories={categories} />
+          <div className="flex flex-col lg:flex-row gap-12">
+            {/* Desktop Sidebar Filters */}
+            <div className="hidden lg:block w-72 shrink-0 sticky top-28 h-fit">
+              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-premium">
+                <FilterSidebar filters={filters} setFilters={setFilters} categories={categories} />
+              </div>
             </div>
 
-            {/* Mobile Filters Modal (simplified) */}
+            {/* Mobile Filters Drawer */}
             {isMobileFiltersOpen && (
-               <div className="fixed inset-0 z-50 bg-black/50 md:hidden">
-                  <div className="absolute right-0 top-0 bottom-0 w-4/5 bg-white p-6 shadow-xl overflow-y-auto">
-                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-lg font-bold">Filters</h2>
-                        <button onClick={() => setIsMobileFiltersOpen(false)} className="text-gray-500">Close</button>
-                     </div>
-                     <FilterSidebar filters={filters} setFilters={setFilters} categories={categories} />
+              <div className="fixed inset-0 z-[2000] lg:hidden animate-in fade-in duration-300">
+                <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsMobileFiltersOpen(false)} />
+                <div className="absolute right-0 top-0 bottom-0 w-[85%] max-w-sm bg-white p-8 shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-500">
+                  <div className="flex justify-between items-center mb-10">
+                    <h2 className="text-xl font-bold text-slate-900">Filters</h2>
+                    <button
+                      onClick={() => setIsMobileFiltersOpen(false)}
+                      className="p-2 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 transition-colors"
+                    >
+                      <FiX className="w-5 h-5" />
+                    </button>
                   </div>
-               </div>
+                  <FilterSidebar filters={filters} setFilters={setFilters} categories={categories} />
+                </div>
+              </div>
             )}
 
-            {/* Product Grid */}
+            {/* Result Area */}
             <div className="flex-grow">
               {loading ? (
-                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                   {Array.from({length: 6}).map((_, i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="bg-gray-200 rounded-2xl aspect-[4/3] mb-4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                      </div>
-                   ))}
-                 </div>
-              ) : (
-                 filteredProducts.length > 0 ? (
-                    <ProductGrid products={filteredProducts} />
-                 ) : (
-                    <div className="text-center py-20">
-                       <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                         <FiSearch className="w-6 h-6 text-gray-400" />
-                       </div>
-                       <h3 className="text-lg font-medium text-gray-900 mb-1">No items found</h3>
-                       <p className="text-gray-500">Try adjusting your search or filters to find what you're looking for.</p>
-                       <button 
-                         onClick={() => {
-                           setSearchQuery('');
-                           setFilters(DEFAULT_FILTERS);
-                         }}
-                         className="mt-6 text-primary font-medium hover:text-primary-hover"
-                       >
-                         Clear filters
-                       </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="bg-slate-100 rounded-[2.5rem] aspect-[4/5] mb-6"></div>
+                      <div className="h-5 bg-slate-100 rounded-full w-3/4 mb-3"></div>
+                      <div className="h-4 bg-slate-100 rounded-full w-1/2"></div>
                     </div>
-                 )
+                  ))}
+                </div>
+              ) : (
+                filteredProducts.length > 0 ? (
+                  <ProductGrid products={filteredProducts} />
+                ) : (
+                  <div className="text-center py-24 flex flex-col items-center bg-slate-50 rounded-[3rem] border border-slate-100 border-dashed">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white shadow-premium mb-8 transform -rotate-6">
+                      <FiSearch className="w-8 h-8 text-indigo-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-3 tracking-tight">No results matched your search</h3>
+                    <p className="text-slate-500 max-w-sm mx-auto leading-relaxed">
+                      Try adjusting your filters or use more general keywords to discover amazing rentals.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        setFilters(DEFAULT_FILTERS);
+                      }}
+                      className="mt-10 px-8 py-3.5 bg-indigo-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all hover:-translate-y-1 active:translate-y-0"
+                    >
+                      Clear all filters
+                    </button>
+                  </div>
+                )
               )}
             </div>
           </div>

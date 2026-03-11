@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { format, formatDistance, differenceInHours } from "date-fns";
-import { Loader2, AlertCircle, Info, Clock, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, Info, Clock, CheckCircle2, Star } from "lucide-react";
 import LoadingPage from "../loadingpages/LoadingPage";
 import RatingPopup from "./RatingPopup";
 import FilterComponent from "./FilterComponent";
@@ -13,21 +13,23 @@ const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 /* ─── Status config ─────────────────────────────────────────────── */
 const STATUS_CONFIG = {
-  pending: { label: "Pending", cls: "bg-warning-light text-warning" },
-  approved: { label: "Approved", cls: "bg-success-light text-success" },
-  rejected: { label: "Rejected", cls: "bg-error-light text-error" },
-  in_transit: { label: "In Transit", cls: "bg-info-light text-info" },
-  delivered: { label: "Delivered", cls: "bg-primary-light text-primary" },
-  in_use: { label: "In Use", cls: "bg-purple-50 text-purple-600" },
-  return_in_transit: { label: "Return Transit", cls: "bg-info-light text-info" },
-  returned: { label: "Returned", cls: "bg-success-light text-success" },
-  completed: { label: "Completed", cls: "bg-gray-100 text-gray-600" },
+  pending: { label: "Pending Audit", cls: "bg-amber-50 text-amber-600", icon: Clock },
+  approved: { label: "Ready", cls: "bg-indigo-50 text-indigo-600", icon: CheckCircle2 },
+  rejected: { label: "Declined", cls: "bg-red-50 text-red-600", icon: AlertCircle },
+  in_transit: { label: "Deploying", cls: "bg-blue-50 text-blue-600", icon: Loader2 },
+  delivered: { label: "Delivered", cls: "bg-emerald-50 text-emerald-600", icon: CheckCircle2 },
+  in_use: { label: "Live Operation", cls: "bg-purple-50 text-purple-600", icon: Info },
+  return_in_transit: { label: "Returning", cls: "bg-blue-50 text-blue-600", icon: Loader2 },
+  returned: { label: "Reclaimed", cls: "bg-emerald-50 text-emerald-600", icon: CheckCircle2 },
+  completed: { label: "Archive", cls: "bg-slate-50 text-slate-400", icon: CheckCircle2 },
 };
 
 const StatusBadge = ({ status }) => {
-  const cfg = STATUS_CONFIG[status] || { label: status, cls: "bg-gray-100 text-gray-600" };
+  const cfg = STATUS_CONFIG[status] || { label: status, cls: "bg-slate-50 text-slate-400", icon: Info };
+  const Icon = cfg.icon;
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${cfg.cls}`}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${cfg.cls}`}>
+      <Icon size={10} className={status.includes("transit") ? "animate-spin" : ""} />
       {cfg.label}
     </span>
   );
@@ -36,15 +38,17 @@ const StatusBadge = ({ status }) => {
 /* ─── Alert ─────────────────────────────────────────────────────── */
 const AlertBanner = ({ type = "info", children }) => {
   const config = {
-    info: { icon: Info, cls: "bg-info-light text-info border-info/20" },
-    error: { icon: AlertCircle, cls: "bg-error-light text-error border-error/20" },
-    success: { icon: CheckCircle2, cls: "bg-success-light text-success border-success/20" },
+    info: { icon: Info, cls: "bg-indigo-50 text-indigo-600 border-indigo-100" },
+    error: { icon: AlertCircle, cls: "bg-red-50 text-red-600 border-red-100" },
+    success: { icon: CheckCircle2, cls: "bg-emerald-50 text-emerald-600 border-emerald-100" },
   };
   const { icon: Icon, cls } = config[type] || config.info;
   return (
-    <div className={`flex items-start gap-3 p-4 rounded-xl border ${cls}`}>
-      <Icon size={16} className="flex-shrink-0 mt-0.5" />
-      <p className="text-sm">{children}</p>
+    <div className={`flex items-start gap-4 p-6 rounded-[2rem] border animate-in fade-in duration-500 ${cls}`}>
+      <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+        <Icon size={18} />
+      </div>
+      <p className="text-[11px] font-black uppercase tracking-widest leading-relaxed mt-1.5">{children}</p>
     </div>
   );
 };
@@ -60,131 +64,98 @@ const RequestCard = ({ request, userId, isNew, onUpdate, onRateExperience }) => 
     : null;
 
   return (
-    <div className={`bg-white rounded-2xl border shadow-card overflow-hidden ${isNew ? "border-primary/40" : "border-gray-100"} ${isCompleted ? "opacity-70" : ""}`}>
+    <div className={`group relative bg-white rounded-[2.5rem] border transition-all duration-500 overflow-hidden ${isNew ? "border-indigo-200 shadow-2xl shadow-indigo-100/50" : "border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50"} ${isCompleted ? "opacity-60 grayscale-[0.2]" : ""}`}>
       {isNew && (
-        <div className="h-0.5 bg-gradient-to-r from-primary to-primary-dark w-full" />
+        <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-indigo-600 to-blue-500" />
       )}
-      <div className="p-5">
-        <div className="flex gap-4">
-          {/* Image */}
-          <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0">
+
+      <div className="p-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Visual Identity */}
+          <div className="w-full lg:w-48 h-48 rounded-[2rem] bg-slate-50 overflow-hidden flex-shrink-0 relative group-hover:scale-[1.02] transition-transform duration-700">
             {imgSrc ? (
-              <img src={imgSrc} alt={product.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = "none"; }} />
+              <img src={imgSrc} alt={product.name} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-300">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" />
-                  <polyline points="21 15 16 10 5 21" />
-                </svg>
+              <div className="w-full h-full flex items-center justify-center text-slate-200">
+                <Info size={48} strokeWidth={1} />
+              </div>
+            )}
+            {isNew && (
+              <div className="absolute top-3 left-3 px-3 py-1.5 rounded-xl bg-indigo-600 text-[10px] font-black text-white uppercase tracking-widest shadow-lg shadow-indigo-500/20">
+                Incoming
               </div>
             )}
           </div>
 
-          {/* Details */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-3 mb-1">
-              <h3 className="text-sm font-semibold text-gray-900 truncate">{product.name || "Unknown product"}</h3>
-              <div className="flex-shrink-0 flex items-center gap-2">
-                {isNew && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-white">New</span>
-                )}
-                <StatusBadge status={request.status} />
+          {/* Operational Details */}
+          <div className="flex-1 space-y-6">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+              <div className="space-y-1">
+                <h3 className="text-xl font-black text-slate-900 tracking-tight leading-tight">{product.name || "Unknown Asset"}</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Request ID: #{request._id?.slice(-8).toUpperCase()}</p>
               </div>
+              <StatusBadge status={request.status} />
             </div>
 
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm font-bold text-gray-900">₹{product.rentalPrice}<span className="text-xs font-normal text-gray-400">/day</span></span>
-              {product.securityDeposit > 0 && (
-                <span className="text-xs text-gray-400">· Deposit ₹{product.securityDeposit}</span>
-              )}
-            </div>
-
-            {/* Owner info */}
-            {owner.name && (
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
-                  {owner.profilePhoto ? (
-                    <img
-                      src={owner.profilePhoto.startsWith("http") ? owner.profilePhoto : `${baseUrl}${owner.profilePhoto}`}
-                      alt={owner.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-semibold">
-                      {owner.name[0]}
-                    </div>
-                  )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Asset Yield</p>
+                <p className="text-sm font-black text-slate-900">₹{product.rentalPrice} <span className="text-[10px] text-slate-400">/ DAY</span></p>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Collateral</p>
+                <p className="text-sm font-black text-slate-900">₹{product.securityDeposit || 0}</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 sm:col-span-2 lg:col-span-1">
+                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1.5">Accountability</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-[10px] font-black uppercase">
+                    {owner.name?.[0] || "?"}
+                  </div>
+                  <span className="text-xs font-black text-indigo-900 tracking-tight">{owner.name}</span>
                 </div>
-                <span className="text-xs text-gray-500">{owner.name}</span>
-                {owner.ratings && (
-                  <span className="text-xs text-gray-400">· ⭐ {owner.ratings}</span>
-                )}
+              </div>
+            </div>
+
+            {/* Operational Windows */}
+            <div className="flex flex-wrap items-center gap-10 py-6 border-y border-slate-50">
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Deployment window</p>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-black text-slate-900">{format(new Date(request.startDate), "MMM dd, yyyy")}</span>
+                  <div className="w-4 h-px bg-slate-200" />
+                  <span className="text-xs font-black text-slate-900">{format(new Date(request.endDate), "MMM dd, yyyy")}</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Rental Cycle</p>
+                <span className="text-xs font-black text-slate-900">{formatDistance(new Date(request.startDate), new Date(request.endDate))}</span>
+              </div>
+            </div>
+
+            {/* Execution Roadmap */}
+            {request.status !== "rejected" && !isCompleted && (
+              <div className="pt-4">
+                <Suspense fallback={<div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50"><Loader2 size={16} className="animate-spin text-slate-400" /> <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Synchronizing state...</span></div>}>
+                  <RentalProgress
+                    request={request}
+                    userId={userId}
+                    onUpdate={onUpdate}
+                  />
+                </Suspense>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Dates row */}
-        <div className="mt-4 grid grid-cols-3 gap-3 p-3 bg-gray-50 rounded-xl">
-          <div>
-            <p className="text-xs text-gray-400 mb-0.5">Start</p>
-            <p className="text-xs font-semibold text-gray-800">{format(new Date(request.startDate), "d MMM yy")}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 mb-0.5">End</p>
-            <p className="text-xs font-semibold text-gray-800">{format(new Date(request.endDate), "d MMM yy")}</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 mb-0.5">Duration</p>
-            <p className="text-xs font-semibold text-gray-800">{formatDistance(new Date(request.startDate), new Date(request.endDate))}</p>
-          </div>
-        </div>
-
-        {/* Description */}
-        {product.description && (
-          <p className="mt-3 text-xs text-gray-500 leading-relaxed line-clamp-2">{product.description}</p>
-        )}
-
-        {request.payment?.status && (
-          <div className="mt-3 rounded-xl border border-primary/10 bg-primary-light/50 px-3 py-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs font-medium text-primary">
-                Payment {request.payment.status === "paid" ? "Done" : "Pending Verification"}
-              </span>
-              {request.invoiceNumber && (
-                <span className="text-xs text-gray-600">Invoice {request.invoiceNumber}</span>
-              )}
-            </div>
-            {request.payment.amount > 0 && (
-              <p className="mt-1 text-xs text-gray-600">Paid amount: ₹{request.payment.amount}</p>
+            {isCompleted && (
+              <button
+                onClick={() => onRateExperience(request)}
+                className="w-full flex items-center justify-center gap-3 py-5 rounded-[1.5rem] bg-indigo-600 text-[11px] font-black text-white uppercase tracking-[0.2em] shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
+              >
+                <Star size={16} /> Finalize Account & Rate
+              </button>
             )}
           </div>
-        )}
-
-        {/* Progress tracker */}
-        {request.status !== "rejected" && !isCompleted && (
-          <div className="mt-4">
-            <Suspense fallback={<div className="flex items-center gap-2 text-xs text-gray-400"><Loader2 size={14} className="animate-spin" />Loading tracker…</div>}>
-              <RentalProgress
-                request={request}
-                userId={userId}
-                onUpdate={onUpdate}
-              />
-            </Suspense>
-          </div>
-        )}
-
-        {/* Rate experience */}
-        {isCompleted && (
-          <div className="mt-4">
-            <button
-              onClick={() => onRateExperience(request)}
-              className="w-full py-2.5 rounded-xl text-sm font-medium text-primary border border-primary/30 hover:bg-primary-light transition-colors"
-            >
-              ⭐ Rate Your Experience
-            </button>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -215,14 +186,12 @@ const RentalRequests = () => {
     catch { return null; }
   })();
 
-  /* Fetch categories */
   useEffect(() => {
     axios.get(`${baseUrl}/api/categories`)
       .then(({ data }) => setCategories(data))
       .catch(() => { });
   }, []);
 
-  /* Fetch requests */
   const fetchRequests = async (type) => {
     try {
       setLoading(true);
@@ -231,7 +200,7 @@ const RentalRequests = () => {
       setRequests(sorted);
       setError("");
     } catch {
-      setError("Failed to fetch requests");
+      setError("Strategic data retrieval failed. Please verify connection.");
       setRequests([]);
     } finally {
       setLoading(false);
@@ -240,7 +209,6 @@ const RentalRequests = () => {
 
   useEffect(() => { if (userId) fetchRequests(activeTab); }, [activeTab, userId]);
 
-  /* Filter */
   useEffect(() => {
     const filtered = requests.filter((r) => {
       const p = r.product || {};
@@ -262,61 +230,77 @@ const RentalRequests = () => {
   const handleResetFilters = () => setFilters({ productName: "", selectedStatuses: [], startDate: "", endDate: "", selectedCategories: [], minPrice: "", maxPrice: "", locationArea: "" });
 
   const TABS = [
-    { id: "received", label: "Received" },
-    { id: "sent", label: "Sent" },
+    { id: "received", label: "Inbound Pipeline" },
+    { id: "sent", label: "Outbound Requests" },
   ];
 
   return (
-    <div>
-      {/* Page header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Rental Requests</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Track, manage and respond to rental requests</p>
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 px-2">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Rental Operations</h1>
+          <p className="text-base font-bold text-slate-400 mt-2 uppercase tracking-[0.2em] text-xs">Execute & Coordinate Asset Rentals</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="px-6 py-3 rounded-2xl bg-slate-50 border border-slate-100">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Active Requests</p>
+            <p className="text-sm font-black text-slate-900">{filteredRequests.length < 10 ? `0${filteredRequests.length}` : filteredRequests.length} <span className="text-[10px] text-slate-300">Total</span></p>
+          </div>
+        </div>
       </div>
 
-      {/* Filter */}
-      <FilterComponent
-        filters={filters}
-        categories={categories}
-        onFilterChange={handleFilterChange}
-        onResetFilters={handleResetFilters}
-      />
+      {/* Control Interface */}
+      <div className="space-y-10">
+        <FilterComponent
+          filters={filters}
+          categories={categories}
+          onFilterChange={handleFilterChange}
+          onResetFilters={handleResetFilters}
+        />
 
-      {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-6 mt-4 w-fit">
-        {TABS.map(({ id, label }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${activeTab === id
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
-              }`}
-          >
-            {label}
-          </button>
-        ))}
+        {/* Tabbed Navigation */}
+        <div className="flex items-center gap-2 p-1.5 bg-slate-50 border border-slate-100 rounded-[1.5rem] w-fit">
+          {TABS.map(({ id, label }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`
+                  px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all
+                  ${isActive
+                    ? "bg-indigo-600 text-white shadow-xl shadow-indigo-100"
+                    : "text-slate-400 hover:text-slate-900 hover:bg-white"
+                  }
+                `}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Content */}
+      {/* Main Stream */}
       {loading ? (
         <LoadingPage />
       ) : error ? (
         <AlertBanner type="error">{error}</AlertBanner>
       ) : filteredRequests.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">
-            <Clock size={24} />
+        <div className="flex flex-col items-center justify-center py-32 px-8 bg-slate-50 rounded-[3rem] border border-slate-100 border-dashed">
+          <div className="w-20 h-20 rounded-[2.5rem] bg-indigo-50 flex items-center justify-center text-indigo-400 mb-6 shadow-inner">
+            <Clock size={32} strokeWidth={1.5} />
           </div>
-          <p className="empty-state-title">No requests found</p>
-          <p className="empty-state-desc">
+          <p className="text-xl font-black text-slate-900 tracking-tight">Pipeline Clear</p>
+          <p className="text-sm font-bold text-slate-400 mt-2 uppercase tracking-widest text-center max-w-sm">
             {activeTab === "received"
-              ? "You haven't received any rental requests yet."
-              : "You haven't sent any rental requests yet."}
+              ? "No incoming requests registered in the command center."
+              : "No outbound deployment requests detected."}
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {filteredRequests.map((request) => (
             <RequestCard
               key={request._id}

@@ -99,8 +99,7 @@ const Header = () => {
       <Navbar expand="xxl" className="app-navbar-wrap sticky-top">
         <Container fluid className="app-navbar-shell">
           <Navbar.Brand as={NavLink} to="/" className="brand-wrap">
-            <img src={mainLogo} alt="Logo" width="160" />
-            {/* <span className="brand-text">JustRentIt</span> */}
+            <img src={mainLogo} alt="JustRentIt" />
           </Navbar.Brand>
 
           <Navbar.Toggle aria-controls="navbar-nav" className="app-navbar-toggle" />
@@ -164,10 +163,10 @@ const Header = () => {
               ) : (
                 <>
                   <NavLink to="/login" className="app-btn-outline">
-                    Login
+                    Sign in
                   </NavLink>
                   <NavLink to="/register" className="app-primary-cta">
-                    Open your account
+                    Get Started
                   </NavLink>
                 </>
               )}

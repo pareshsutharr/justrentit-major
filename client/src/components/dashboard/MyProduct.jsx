@@ -3,7 +3,17 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProductModal from "./ProductModal";
-import { Pencil, Trash2, ChevronLeft, ChevronRight, CheckCircle, Star } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle,
+  Star,
+  Info,
+  AlertCircle,
+  Package,
+} from "lucide-react";
 import Swal from "sweetalert2";
 import LoadingPage from "../loadingpages/LoadingPage";
 
@@ -11,34 +21,36 @@ const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 /* ─── Status badge helpers ──────────────────────────────────────── */
 const conditionConfig = {
-  new: { label: "New", bg: "bg-success-light text-success" },
-  excellent: { bg: "bg-info-light text-info", label: "Excellent" },
-  good: { bg: "bg-amber-50 text-amber-600", label: "Good" },
-  fair: { bg: "bg-warning-light text-warning", label: "Fair" },
-  poor: { bg: "bg-error-light text-error", label: "Poor" },
+  new: { label: "New", bg: "bg-emerald-50 text-emerald-600", icon: CheckCircle },
+  excellent: { label: "Excellent", bg: "bg-indigo-50 text-indigo-600", icon: Star },
+  good: { label: "Good", bg: "bg-blue-50 text-blue-600", icon: Star },
+  fair: { label: "Fair", bg: "bg-amber-50 text-amber-600", icon: Info },
+  poor: { label: "Poor", bg: "bg-slate-50 text-slate-500", icon: AlertCircle },
 };
 
 const ConditionBadge = ({ condition }) => {
-  const cfg = conditionConfig[condition] || { label: condition, bg: "bg-gray-100 text-gray-600" };
+  const cfg = conditionConfig[condition] || { label: condition, bg: "bg-slate-50 text-slate-400", icon: Info };
+  const Icon = cfg.icon;
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${cfg.bg}`}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${cfg.bg}`}>
+      <Icon size={10} />
       {cfg.label}
     </span>
   );
 };
 
 const StarRating = ({ rating, total }) => (
-  <div className="flex items-center gap-1.5">
-    <div className="flex">
+  <div className="flex items-center gap-2">
+    <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          size={13}
-          className={i <= Math.round(rating) ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"}
+          size={12}
+          className={i <= Math.round(rating) ? "text-amber-400 fill-amber-400" : "text-slate-100 fill-slate-100"}
         />
       ))}
     </div>
-    <span className="text-xs text-gray-400">({total || 0})</span>
+    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{total || 0} Reviews</span>
   </div>
 );
 
@@ -51,99 +63,102 @@ const ProductCard = ({ product, currentImageIndex, onPrev, onNext, onEdit, onDel
     : null;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-hover transition-all duration-200 overflow-hidden flex flex-col group">
-      {/* Image */}
-      <div className="relative h-52 bg-gray-50 overflow-hidden">
+    <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-100/30 transition-all duration-500 overflow-hidden flex flex-col group h-full">
+      {/* Visual Workspace */}
+      <div className="relative aspect-[4/3] bg-slate-50 overflow-hidden m-4 rounded-[2rem]">
         {imgSrc ? (
-          <img src={imgSrc} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <img
+            src={imgSrc}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+          />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" />
-              <polyline points="21 15 16 10 5 21" />
-            </svg>
+          <div className="w-full h-full flex items-center justify-center text-slate-200">
+            <Package size={48} strokeWidth={1} />
           </div>
         )}
 
-        {/* Image nav */}
+        {/* Dynamic Navigation */}
         {images.length > 1 && (
-          <>
-            <button onClick={onPrev} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition-colors">
-              <ChevronLeft size={16} />
-            </button>
-            <button onClick={onNext} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition-colors">
-              <ChevronRight size={16} />
-            </button>
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-              {images.map((_, i) => (
-                <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === imgIdx ? "bg-white" : "bg-white/40"}`} />
-              ))}
+          <div className="absolute inset-x-4 bottom-4 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="flex gap-1.5">
+              <button
+                onClick={(e) => { e.stopPropagation(); onPrev(); }}
+                className="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-600 hover:bg-white hover:text-indigo-600 shadow-xl transition-all"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onNext(); }}
+                className="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-600 hover:bg-white hover:text-indigo-600 shadow-xl transition-all"
+              >
+                <ChevronRight size={18} />
+              </button>
             </div>
-          </>
+            <div className="px-3 py-1.5 rounded-xl bg-slate-900/40 backdrop-blur-md text-[10px] font-black text-white/90 uppercase tracking-tighter">
+              {imgIdx + 1} of {images.length}
+            </div>
+          </div>
         )}
 
-        {/* Badges — top overlay */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1">
-          {product.verified && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success text-white">
-              <CheckCircle size={11} /> Verified
-            </span>
-          )}
-          {product.featured && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-white">
-              Featured
-            </span>
+        {/* Global Markers */}
+        <div className="absolute top-4 left-4 flex flex-col gap-2">
+          {product.available ? (
+            <div className="px-3 py-1.5 rounded-xl bg-emerald-500/90 backdrop-blur-md text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-1.5 border border-emerald-400/20 shadow-lg shadow-emerald-500/10">
+              <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              Live Deployment
+            </div>
+          ) : (
+            <div className="px-3 py-1.5 rounded-xl bg-slate-900/60 backdrop-blur-md text-[10px] font-black text-white/90 uppercase tracking-widest border border-white/10">
+              Inactive
+            </div>
           )}
         </div>
 
-        {/* Action buttons */}
-        <div className="absolute top-2 right-2 flex gap-1.5">
+        {/* Operation Control */}
+        <div className="absolute top-4 right-4 flex flex-col gap-2 scale-90 group-hover:scale-100 transition-transform duration-500 origin-top-right">
           <button
             onClick={onEdit}
-            className="w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-sm flex items-center justify-center text-gray-600 hover:text-primary transition-colors"
+            className="w-11 h-11 rounded-2xl bg-white shadow-xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:rotate-6 transition-all"
           >
-            <Pencil size={14} />
+            <Pencil size={18} strokeWidth={2.5} />
           </button>
           <button
             onClick={onDelete}
-            className="w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-sm flex items-center justify-center text-gray-600 hover:text-error transition-colors"
+            className="w-11 h-11 rounded-2xl bg-white shadow-xl flex items-center justify-center text-slate-400 hover:text-red-500 hover:-rotate-6 transition-all"
           >
-            <Trash2 size={14} />
+            <Trash2 size={18} strokeWidth={2.5} />
           </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-4 flex flex-col flex-1">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">{product.name}</h3>
-          <ConditionBadge condition={product.condition} />
+      {/* Strategic Data */}
+      <div className="px-8 pb-8 flex flex-col flex-1">
+        <div className="mb-6">
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <h3 className="text-lg font-black text-slate-900 leading-tight tracking-tight line-clamp-1">{product.name}</h3>
+            <ConditionBadge condition={product.condition} />
+          </div>
+          <p className="text-xs font-bold text-slate-400 leading-relaxed uppercase tracking-widest line-clamp-2">{product.description}</p>
         </div>
 
-        <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 mb-3">{product.description}</p>
+        <div className="mt-auto space-y-6">
+          <StarRating rating={product.ratings?.averageRating || 0} total={product.ratings?.totalRatings} />
 
-        <StarRating rating={product.ratings?.averageRating || 0} total={product.ratings?.totalRatings} />
-
-        <div className="mt-auto pt-3 border-t border-gray-50">
-          <div className="flex items-center justify-between">
+          <div className="flex items-end justify-between pt-6 border-t border-slate-50">
             <div>
-              <p className="text-base font-bold text-gray-900">
-                ₹{product.rentalPrice}
-                <span className="text-xs font-normal text-gray-400">/{product.rentalDuration}</span>
-              </p>
-              {product.securityDeposit > 0 && (
-                <p className="text-xs text-gray-400">Deposit ₹{product.securityDeposit}</p>
-              )}
+              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Rental Yield</p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-black text-slate-900 tracking-tighter">₹{product.rentalPrice}</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">/{product.rentalDuration}</span>
+              </div>
             </div>
-            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${product.available ? "bg-success-light text-success" : "bg-gray-100 text-gray-500"}`}>
-              {product.available ? "Available" : "Unavailable"}
-            </span>
+
+            <div className="text-right">
+              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Security</p>
+              <p className="text-xs font-black text-slate-900">₹{product.securityDeposit || 0}</p>
+            </div>
           </div>
-          {product.location?.area && (
-            <p className="text-xs text-gray-400 mt-1.5 truncate">
-              📍 {product.location.area}, {product.location.state}
-            </p>
-          )}
         </div>
       </div>
     </div>
@@ -152,32 +167,34 @@ const ProductCard = ({ product, currentImageIndex, onPrev, onNext, onEdit, onDel
 
 /* ─── Pagination ────────────────────────────────────────────────── */
 const Pagination = ({ currentPage, totalPages, onPage }) => (
-  <div className="flex items-center justify-center gap-1">
+  <div className="flex items-center justify-center gap-3">
     <button
       onClick={() => onPage(Math.max(1, currentPage - 1))}
       disabled={currentPage === 1}
-      className="w-9 h-9 rounded-xl flex items-center justify-center text-sm border border-gray-200 disabled:opacity-40 hover:border-primary hover:text-primary transition-colors"
+      className="w-12 h-12 rounded-2xl flex items-center justify-center border border-slate-100 disabled:opacity-30 hover:bg-slate-50 hover:text-indigo-600 transition-all text-slate-400"
     >
-      <ChevronLeft size={16} />
+      <ChevronLeft size={20} />
     </button>
-    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-      <button
-        key={page}
-        onClick={() => onPage(page)}
-        className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-medium border transition-colors ${currentPage === page
-            ? "bg-primary text-white border-primary"
-            : "border-gray-200 text-gray-600 hover:border-primary hover:text-primary"
-          }`}
-      >
-        {page}
-      </button>
-    ))}
+    <div className="flex items-center gap-2">
+      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        <button
+          key={page}
+          onClick={() => onPage(page)}
+          className={`w-12 h-12 rounded-2xl flex items-center justify-center text-[11px] font-black tracking-widest transition-all ${currentPage === page
+            ? "bg-indigo-600 text-white shadow-xl shadow-indigo-100"
+            : "text-slate-400 hover:bg-slate-50 hover:text-slate-900"
+            }`}
+        >
+          {page < 10 ? `0${page}` : page}
+        </button>
+      ))}
+    </div>
     <button
       onClick={() => onPage(Math.min(totalPages, currentPage + 1))}
       disabled={currentPage === totalPages}
-      className="w-9 h-9 rounded-xl flex items-center justify-center text-sm border border-gray-200 disabled:opacity-40 hover:border-primary hover:text-primary transition-colors"
+      className="w-12 h-12 rounded-2xl flex items-center justify-center border border-slate-100 disabled:opacity-30 hover:bg-slate-50 hover:text-indigo-600 transition-all text-slate-400"
     >
-      <ChevronRight size={16} />
+      <ChevronRight size={20} />
     </button>
   </div>
 );
@@ -261,28 +278,29 @@ export default function MyProduct() {
   const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 px-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Products</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {products.length} item{products.length !== 1 ? "s" : ""} listed
-          </p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Market Inventory</h1>
+          <p className="text-base font-bold text-slate-400 mt-2 uppercase tracking-[0.2em] text-xs">Manage & Monitor Your Deployment Base</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="px-6 py-3 rounded-2xl bg-slate-50 border border-slate-100">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total Assets</p>
+            <p className="text-sm font-black text-slate-900">{products.length < 10 ? `0${products.length}` : products.length} <span className="text-[10px] text-slate-300">Listed</span></p>
+          </div>
         </div>
       </div>
 
       {/* Empty state */}
       {products.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
-              <polyline points="16 3 12 7 8 3" />
-            </svg>
+        <div className="flex flex-col items-center justify-center py-24 px-8 bg-slate-50 rounded-[3rem] border border-slate-100 border-dashed">
+          <div className="w-20 h-20 rounded-[2.5rem] bg-indigo-50 flex items-center justify-center text-indigo-400 mb-6 shadow-inner">
+            <Package size={32} strokeWidth={1.5} />
           </div>
-          <p className="empty-state-title">No products yet</p>
-          <p className="empty-state-desc">You haven't listed any products. Start by adding your first item to rent out.</p>
+          <p className="text-xl font-black text-slate-900 tracking-tight">No active deployments</p>
+          <p className="text-sm font-bold text-slate-400 mt-2 uppercase tracking-widest text-center max-w-sm">Your inventory is currently empty. Initialize a new asset to start earning.</p>
         </div>
       ) : (
         <>
