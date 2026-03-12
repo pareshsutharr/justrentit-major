@@ -60,9 +60,34 @@ router.get("/products/search", async (req, res) => {
 router.get("/products", async (req, res) => {
   try {
     const products = await RentProduct.find().populate("category");
-    res.json(products);
+    res.json({ success: true, products });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.get("/products/:id", async (req, res) => {
+  try {
+    const product = await RentProduct.findById(req.params.id)
+      .populate("category")
+      .populate("userId", "-password");
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    res.json({ success: true, product });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.get("/categories", async (req, res) => {
+  try {
+    const categories = await Category.find().sort({ name: 1 });
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

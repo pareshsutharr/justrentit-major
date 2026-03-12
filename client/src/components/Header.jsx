@@ -11,10 +11,11 @@ import { useNavigate, NavLink } from "react-router-dom";
 import axios from "axios";
 import SearchModal from "./SearchModal";
 import NotificationComponent from "./NotificationComponent";
+import { getApiBaseUrl, getImageUrl } from "../utils/productHelpers";
 import "./Header.css";
 import mainLogo from "../../images/jri-logo.png";
 import defaultProfileImage from "../../images/default-image.png";
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+const baseUrl = getApiBaseUrl();
 const Header = () => {
   const [user, setUser] = useState(null);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -77,7 +78,9 @@ const Header = () => {
       if (!userId) return;
 
       try {
-        const response = await axios.get(`${baseUrl}/api/user/${userId}`);
+        const response = await axios.get(`${baseUrl}/api/users/profile`, {
+          params: { userId },
+        });
         if (response.data.success) {
           setUser(response.data.user);
         }
@@ -124,7 +127,7 @@ const Header = () => {
                           src={
                             user.profilePhoto.startsWith("http")
                               ? user.profilePhoto
-                              : `${baseUrl}${user.profilePhoto}`
+                              : getImageUrl(user.profilePhoto)
                           }
                           alt="User"
                           roundedCircle

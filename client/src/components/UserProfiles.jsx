@@ -74,7 +74,9 @@ const UserProfiles = () => {
         }
 
         if (!profilePayload) {
-          const { data } = await axios.get(`${baseUrl}/api/user/${storedUser._id}`);
+          const { data } = await axios.get(`${baseUrl}/api/users/profile`, {
+            params: { userId: storedUser._id },
+          });
           if (data?.success && data.user) {
             profilePayload = data.user;
           }

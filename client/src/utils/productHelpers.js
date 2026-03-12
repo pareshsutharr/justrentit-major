@@ -1,12 +1,24 @@
-const FALLBACK_API_BASE_URL = "http://localhost:3001";
+const DEV_API_BASE_URL = "http://localhost:3001";
 const INR_FORMATTER = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
   maximumFractionDigits: 0,
 });
 
-export const getApiBaseUrl = () =>
-  import.meta.env.VITE_API_BASE_URL || FALLBACK_API_BASE_URL;
+export const getApiBaseUrl = () => {
+  const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/$/, "");
+
+  if (configuredBaseUrl) {
+    return configuredBaseUrl;
+  }
+
+  if (import.meta.env.DEV) {
+    return DEV_API_BASE_URL;
+  }
+
+  console.error("Missing VITE_API_BASE_URL in production.");
+  return "";
+};
 
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return "";

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Header from "./Header";
 import Footer from "./Footer";
+import { getApiBaseUrl, getImageUrl } from "../utils/productHelpers";
 import "./Home.css";
 
 // Assets
@@ -9,7 +10,7 @@ import heroIllustration from "../assets/images/hero-illustration.png";
 import howItWorksIllustration from "../assets/images/how-it-works-illustration.png";
 import ctaIllustration from "../assets/images/cta-illustration.png";
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+const baseUrl = getApiBaseUrl();
 
 function Home() {
   const [allProducts, setAllProducts] = useState([]);
@@ -88,9 +89,7 @@ function Home() {
                       {filteredSearchProducts.length > 0 ? (
                         filteredSearchProducts.map(item => {
                           let imgUrl = item.images && item.images.length > 0 ? item.images[0] : "";
-                          if (imgUrl && !imgUrl.startsWith('http')) {
-                            imgUrl = `${baseUrl}/${imgUrl.replace(/\\/g, '/').replace(/^\//, '')}`;
-                          }
+                          imgUrl = getImageUrl(imgUrl);
                           return (
                             <div key={item._id} className="search-dropdown-item" onClick={() => window.location.href = `/product/${item._id}`}>
                               <img src={imgUrl || 'https://via.placeholder.com/40'} alt={item.name} className="search-dropdown-img" />
@@ -142,13 +141,7 @@ function Home() {
               {featuredProducts.length > 0 ? (
                 featuredProducts.map((item) => {
                   let imageUrl = item.images && item.images.length > 0 ? item.images[0] : "";
-                  if (imageUrl && !imageUrl.startsWith('http')) {
-                    // Prepend baseUrl, ensure no double slashes if imageUrl starts with /
-                    const cleanPath = imageUrl.replace(/\\/g, '/');
-                    imageUrl = cleanPath.startsWith('/') 
-                      ? `${baseUrl}${cleanPath}` 
-                      : `${baseUrl}/${cleanPath}`;
-                  }
+                  imageUrl = getImageUrl(imageUrl);
                   
                   return (
                     <div key={item._id} className="rental-card" onClick={() => window.location.href = `/product/${item._id}`} style={{cursor: 'pointer'}}>

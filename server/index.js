@@ -33,6 +33,8 @@ const { verifyToken } = require("./middleware/auth");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const REQUIRED_ENV_VARS = ["MONGODB_URI", "JWT_SECRET"];
+let lastDatabaseError = null;
 
 // CORS Configuration
 const allowedOrigins = [
@@ -60,20 +62,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Database Connection
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.log("MongoDB connection error: ", err));
-
 // --- API Routes ---
 
 // Health Check
 app.get("/api/health", (req, res) => {
+  const missingEnv = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
+  const isHealthy = missingEnv.length === 0 && mongoose.connection.readyState === 1;
+
   res.json({
-    success: true,
+    success: isHealthy,
     uptime: process.uptime(),
+    missingEnv,
     dbState: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    dbError: lastDatabaseError,
   });
 });
 
@@ -176,6 +177,38 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+const startServer = async () => {
+  const missingEnv = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
+
+  if (missingEnv.length > 0) {
+    console.error(`Missing required environment variables: ${missingEnv.join(", ")}`);
+    process.exit(1);
+  }
+
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+    });
+    lastDatabaseError = null;
+    console.log("MongoDB connected");
+  } catch (err) {
+    lastDatabaseError = err.message;
+    console.error("MongoDB connection error:", err.message);
+    process.exit(1);
+  }
+
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+};
+
+mongoose.connection.on("error", (err) => {
+  lastDatabaseError = err.message;
+  console.error("MongoDB runtime error:", err.message);
 });
+
+mongoose.connection.on("connected", () => {
+  lastDatabaseError = null;
+});
+
+startServer();

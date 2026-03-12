@@ -7,8 +7,9 @@ import moment from "moment";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import LoadingPage from "./loadingpages/LoadingForLocation";
+import { getApiBaseUrl } from "../utils/productHelpers";
 // import LoadingPage from "./loadingpages/LoadingPageLocation";
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+const baseUrl = getApiBaseUrl();
 const NotificationComponent = ({ userId }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -20,7 +21,7 @@ const NotificationComponent = ({ userId }) => {
     if (!userId) return;
     try {
       setLoading(true);
-      const response = await axios.get(`${baseUrl}/notifications`, {
+      const response = await axios.get(`${baseUrl}/api/notifications`, {
         params: { userId },
       });
       if (response.data.success) {
@@ -47,9 +48,7 @@ const NotificationComponent = ({ userId }) => {
 
   const markAsRead = async (notificationId) => {
     try {
-      await axios.put(
-      `${baseUrl}/notifications/${notificationId}/read`
-      );
+      await axios.put(`${baseUrl}/api/notifications/${notificationId}/read`);
       setNotifications((prev) =>
         prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n))
       );

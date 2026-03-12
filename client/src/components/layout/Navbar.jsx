@@ -47,7 +47,9 @@ const Navbar = () => {
 
     const fetchLatestUser = async () => {
       try {
-        const response = await axios.get(`${baseUrl}/api/user/${userId}`);
+        const response = await axios.get(`${baseUrl}/api/users/profile`, {
+          params: { userId },
+        });
         if (response.data?.success && response.data.user) {
           const mergedUser = {
             ...user,
@@ -79,7 +81,7 @@ const Navbar = () => {
     if (!user?._id) return;
     setNotificationLoading(true);
     try {
-      const response = await axios.get(`${baseUrl}/notifications`, {
+      const response = await axios.get(`${baseUrl}/api/notifications`, {
         params: { userId: user._id },
       });
       const items = response?.data?.notifications || [];
@@ -117,7 +119,7 @@ const Navbar = () => {
 
   const markAsRead = async (notificationId) => {
     try {
-      await axios.put(`${baseUrl}/notifications/${notificationId}/read`);
+      await axios.put(`${baseUrl}/api/notifications/${notificationId}/read`);
       setNotifications((previous) =>
         previous.map((notification) =>
           notification._id === notificationId ? { ...notification, read: true } : notification
