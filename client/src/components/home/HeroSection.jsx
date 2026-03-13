@@ -70,7 +70,7 @@ const HeroSection = () => {
   };
 
   return (
-    <div className="relative overflow-hidden bg-white pt-20 pb-20 lg:pt-32 lg:pb-32">
+    <div className="relative overflow-hidden bg-white  lg:pb-32">
       {/* Premium Background Mesh Gradient Subtlety */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 pointer-events-none opacity-40">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-100 blur-[120px] rounded-full" />
@@ -171,16 +171,16 @@ const HeroSection = () => {
 
           <div className="relative group">
             {/* Main Visual Composition */}
-            <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl bg-slate-100 border-[8px] border-white max-w-lg mx-auto aspect-[4/5] transform group-hover:scale-[1.01] transition-transform duration-700">
+            <div className="relative overflow-hidden max-w-lg mx-auto aspect-[4/5] transform group-hover:scale-[1.01] transition-transform duration-700">
               {heroSlides.map((slideUrl, index) => (
-                <div
+                <img
                   key={slideUrl}
-                  className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out scale-110 ${index === activeSlide ? "opacity-100 scale-100" : "opacity-0"
+                  src={slideUrl}
+                  alt={`Hero item ${index + 1}`}
+                  className={`absolute inset-0 h-full w-full object-contain transition-all duration-1000 ease-in-out ${index === activeSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-110'
                     }`}
-                  style={{ backgroundImage: `url('${slideUrl}')` }}
                 />
               ))}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-60" />
             </div>
 
             {/* Premium Achievement Badge */}
