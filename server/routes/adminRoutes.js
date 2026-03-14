@@ -97,4 +97,48 @@ router.delete('/:userId', verifyToken, adminCheck, async (req, res) => {
   }
 });
 
+// Update verification status
+router.patch('/:userId/verify', verifyToken, adminCheck, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { verified } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { isVerified: Boolean(verified) },
+      { new: true }
+    ).select('-password -googleId');
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Error updating verification:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Bulk update verification status
+router.post('/bulk-verify', verifyToken, adminCheck, async (req, res) => {
+  try {
+    const { userIds, verified } = req.body;
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ message: 'userIds must be a non-empty array' });
+    }
+
+    await User.updateMany(
+      { _id: { $in: userIds } },
+      { $set: { isVerified: Boolean(verified) } }
+    );
+
+    res.json({ message: `${userIds.length} users updated` });
+  } catch (error) {
+    console.error('Error bulk updating verification:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

@@ -1,45 +1,44 @@
 // components/AdminDashboard/UserManagement.js
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { TailSpin } from "react-loader-spinner";
 import {
   MagnifyingGlass,
   Trash,
-  UserSwitch,
   ShieldWarning,
-  UserCircleGear,
   ShieldCheck,
 } from "phosphor-react";
 import "./UserManagement.css";
 import LoadingPage from "../loadingpages/LoadingPage";
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+import { getApiBaseUrl } from "../../utils/productHelpers";
+
+const baseUrl = getApiBaseUrl();
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedUsers, setSelectedUsers] = useState([]);
-const [filterRole, setFilterRole] = useState('all');
-const [filterStatus, setFilterStatus] = useState('all');
 
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
         `${baseUrl}/api/admin/users?search=${searchTerm}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setUsers(response.data);
+      const receivedUsers = Array.isArray(response.data)
+        ? response.data
+        : response.data?.users || [];
+      setUsers(receivedUsers);
       setError("");
-    } catch (err) {
+    } catch {
+      setUsers([]);
+      setError("Failed to fetch users");
       showErrorAlert("Failed to fetch users");
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm]);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -47,7 +46,7 @@ const [filterStatus, setFilterStatus] = useState('all');
     }, 500);
 
     return () => clearTimeout(delayDebounce);
-  }, [searchTerm]);
+  }, [fetchUsers]);
 
   const showSuccessAlert = (message) => {
     Swal.fire({
@@ -85,7 +84,7 @@ const [filterStatus, setFilterStatus] = useState('all');
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.put(
+        const response = await axios.patch(
              `${baseUrl}/api/admin/users/${userId}/role`,
           { role: newRole },
           { headers: { Authorization: `Bearer ${token}` } }
@@ -97,7 +96,7 @@ const [filterStatus, setFilterStatus] = useState('all');
           )
         );
         showSuccessAlert("User role updated successfully");
-      } catch (err) {
+      } catch {
         showErrorAlert("Failed to update user role");
       }
     }
@@ -122,7 +121,7 @@ const [filterStatus, setFilterStatus] = useState('all');
         });
         setUsers(users.filter((user) => user._id !== userId));
         showSuccessAlert("User deleted successfully");
-      } catch (err) {
+      } catch {
         showErrorAlert("Failed to delete user");
       }
     }
@@ -143,7 +142,7 @@ const [filterStatus, setFilterStatus] = useState('all');
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.put(
+        const response = await axios.patch(
              `${baseUrl}/api/admin/users/${userId}/verify`,
           { verified: verifyStatus },
           { headers: { Authorization: `Bearer ${token}` } }
@@ -151,48 +150,17 @@ const [filterStatus, setFilterStatus] = useState('all');
 
         setUsers(
           users.map((user) =>
-            user._id === userId ? { ...user, isVerified: verifyStatus } : user
+            user._id === userId ? { ...user, isVerified: response.data.isVerified } : user
           )
         );
         showSuccessAlert(
           `User ${verifyStatus ? "verified" : "unverified"} successfully`
         );
-      } catch (err) {
+      } catch {
         showErrorAlert("Failed to update verification status");
       }
     }
   };
-  // Add bulk verification handler
-const handleBulkVerify = async (verifyStatus) => {
-  if (selectedUsers.length === 0) return;
-
-  const result = await Swal.fire({
-    title: `${verifyStatus ? 'Verify' : 'Unverify'} ${selectedUsers.length} users?`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3b82f6',
-    cancelButtonColor: '#64748b',
-  });
-
-  if (result.isConfirmed) {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        `${baseUrl}/api/admin/users/bulk-verify`,
-        { userIds: selectedUsers, verified: verifyStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      setUsers(users.map(user => 
-        selectedUsers.includes(user._id) ? { ...user, isVerified: verifyStatus } : user
-      ));
-      setSelectedUsers([]);
-      showSuccessAlert(`${selectedUsers.length} users updated`);
-    } catch (err) {
-      showErrorAlert('Bulk update failed');
-    }
-  }
-};
 
   return (
     <div className="p-6 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
