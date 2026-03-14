@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { Bar, Line, Pie, Doughnut } from "react-chartjs-2";
 import { Chart, registerables } from "chart.js";
@@ -6,7 +6,9 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { Card, Row, Col, Spinner } from "react-bootstrap";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+import { getApiBaseUrl } from "../../utils/productHelpers";
+
+const baseUrl = getApiBaseUrl();
 Chart.register(...registerables);
 
 const AnalyticsDashboard = () => {
@@ -18,17 +20,20 @@ const AnalyticsDashboard = () => {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
+        const token = localStorage.getItem("token");
+        const config = {
+          headers: { Authorization: `Bearer ${token}` },
+        };
         const [usersRes, productsRes, rentalsRes] = await Promise.all([
-          axios.get(`${baseUrl}/api/analytics/users`),
-          axios.get(`${baseUrl}/api/analytics/products`),
-          axios.get(`${baseUrl}/api/analytics/rentals`),
+          axios.get(`${baseUrl}/api/admin/analytics/users`, config),
+          axios.get(`${baseUrl}/api/admin/analytics/products`, config),
+          axios.get(`${baseUrl}/api/admin/analytics/rentals`, config),
         ]);
 
         setUserStats(usersRes.data);
         setProductStats(productsRes.data);
         setRentalStats(rentalsRes.data);
-        console.log(rentalStats);
-      } catch (error) {
+      } catch {
         toast.error("Failed to load analytics data");
       } finally {
         setLoading(false);
@@ -37,13 +42,10 @@ const AnalyticsDashboard = () => {
 
     fetchAnalytics();
   }, []);
-  useEffect(() => {
-    console.log("Rental Stats:", rentalStats);
-  }, [rentalStats]);
   // User Analytics Charts
   const userSignupData = {
     labels: userStats.signups?.map((s) =>
-      new Date(s.date).toLocaleDateString()
+      new Date(s._id).toLocaleDateString()
     ),
     datasets: [
       {
@@ -93,8 +95,6 @@ const AnalyticsDashboard = () => {
       },
     ],
   };
-  const totalRevenue = rentalStats.totalRevenue || 0; // Default to 0 if no data
-
   // Rental Analytics Charts
   const rentalStatusData = {
     labels: Object.keys(rentalStats.statusDistribution || {}),
@@ -103,18 +103,6 @@ const AnalyticsDashboard = () => {
         label: "Rental Status",
         data: Object.values(rentalStats.statusDistribution || {}),
         backgroundColor: "rgba(255, 159, 64, 0.6)",
-      },
-    ],
-  };
-
-  const rentalRevenueData = {
-    labels: rentalStats.monthlyRevenue?.map((r) => r.month),
-    datasets: [
-      {
-        label: "Monthly Revenue (USD)",
-        data: rentalStats.monthlyRevenue?.map((r) => r.revenue),
-        borderColor: "#32CD32",
-        fill: false,
       },
     ],
   };

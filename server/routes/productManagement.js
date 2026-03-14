@@ -5,7 +5,7 @@ const { adminCheck, verifyToken } = require('../middleware/auth');
 const RentProduct = require('../models/RentProduct');
 const Category = require('../models/Category');
 // Product Management Routes
-router.get('/admin/products', adminCheck, verifyToken, async (req, res) => {
+router.get('/', verifyToken, adminCheck, async (req, res) => {
     try {
       const { status, featured, searchTerm, page = 1 } = req.query;
       const query = {};
@@ -32,7 +32,7 @@ router.get('/admin/products', adminCheck, verifyToken, async (req, res) => {
     }
   });
   
-  router.put('/admin/products/:id/verify',  adminCheck, verifyToken, async (req, res) => {
+  router.put('/:id/verify', verifyToken, adminCheck, async (req, res) => {
     try {
       const product = await RentProduct.findByIdAndUpdate(
         req.params.id,
@@ -45,7 +45,7 @@ router.get('/admin/products', adminCheck, verifyToken, async (req, res) => {
     }
   });
   
-  router.put('/admin/products/:id/feature',  adminCheck, verifyToken, async (req, res) => {
+  router.put('/:id/feature', verifyToken, adminCheck, async (req, res) => {
     try {
       const product = await RentProduct.findByIdAndUpdate(
         req.params.id,
@@ -58,7 +58,7 @@ router.get('/admin/products', adminCheck, verifyToken, async (req, res) => {
     }
   });
   
-  router.put('/admin/products/:id',  adminCheck, verifyToken, async (req, res) => {
+  router.put('/:id', verifyToken, adminCheck, async (req, res) => {
     try {
       const updates = {};
       const { name, description, rentalPrice, category } = req.body || {};
@@ -105,7 +105,7 @@ router.get('/admin/products', adminCheck, verifyToken, async (req, res) => {
     }
   });
   
-  router.delete('/admin/products/:id',  adminCheck, verifyToken, async (req, res) => {
+  router.delete('/:id', verifyToken, adminCheck, async (req, res) => {
     try {
       await RentProduct.findByIdAndDelete(req.params.id);
       res.json({ message: 'Product deleted' });

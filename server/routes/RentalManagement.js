@@ -3,7 +3,7 @@ const RentalRequest = require("../models/RentalRequest");
 const express = require('express');
 const router = express.Router();
 // Rental Routes
-router.get('/admin/rentals',adminCheck, verifyToken, async (req, res) => {
+router.get('/', verifyToken, adminCheck, async (req, res) => {
     try {
       const { status, search, sort } = req.query;
       
@@ -32,7 +32,7 @@ router.get('/admin/rentals',adminCheck, verifyToken, async (req, res) => {
     }
   });
   
-  router.put('/admin/rentals/:id/status',adminCheck, verifyToken, async (req, res) => {
+  router.put('/:id/status', verifyToken, adminCheck, async (req, res) => {
     try {
       const { status, message } = req.body;
       const request = await RentalRequest.findById(req.params.id);
