@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { getApiBaseUrl } from "../../utils/productHelpers";
+import { getApiBaseUrl, getImageUrl } from "../../utils/productHelpers";
 
 const baseUrl = getApiBaseUrl();
 function ProductModal({ product, onClose, onSave }) {
@@ -157,23 +157,19 @@ function ProductModal({ product, onClose, onSave }) {
     }
 
     const formData = new FormData();
-    const numericFields = ["rentalPrice", "securityDeposit", "sellingPrice"];
-    const booleanFields = ["available", "featured", "isForSale"];
 
-    // Append all fields with proper formatting
-    Object.entries(editedProduct).forEach(([key, value]) => {
-      if (booleanFields.includes(key)) {
-        formData.append(key, value.toString());
-      } else if (key === "location") {
-        formData.append(key, JSON.stringify(value));
-      } else if (key === "category") {
-        formData.append(key, JSON.stringify(value));
-      } else if (numericFields.includes(key)) {
-        formData.append(key, parseFloat(value) || 0);
-      } else {
-        formData.append(key, value);
-      }
-    });
+    formData.append("name", editedProduct.name || "");
+    formData.append("description", editedProduct.description || "");
+    formData.append("rentalPrice", String(parseFloat(editedProduct.rentalPrice) || 0));
+    formData.append("securityDeposit", String(parseFloat(editedProduct.securityDeposit) || 0));
+    formData.append("rentalDuration", editedProduct.rentalDuration || "day");
+    formData.append("condition", editedProduct.condition || "good");
+    formData.append("available", String(Boolean(editedProduct.available)));
+    formData.append("featured", String(Boolean(editedProduct.featured)));
+    formData.append("isForSale", String(Boolean(editedProduct.isForSale)));
+    formData.append("sellingPrice", String(parseFloat(editedProduct.sellingPrice) || 0));
+    formData.append("location", JSON.stringify(editedProduct.location || {}));
+    formData.append("category", JSON.stringify(Array.isArray(editedProduct.category) ? editedProduct.category : []));
 
     // Append images
     imageFiles.forEach((file) => formData.append("images", file));
@@ -449,7 +445,7 @@ function ProductModal({ product, onClose, onSave }) {
                           src={
                             preview.startsWith("blob:")
                               ? preview
-                              :   `${baseUrl}${preview}`
+                              : getImageUrl(preview)
                           }
                           alt={`preview-${index}`}
                           className="img-thumbnail"

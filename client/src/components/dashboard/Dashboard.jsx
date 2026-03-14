@@ -13,8 +13,9 @@ import Chat from "./Chat";
 import RentalRequests from "./RentalRequests";
 import UserProfiles from "../UserProfiles";
 import Invoices from "./Invoices";
+import { getApiBaseUrl } from "../../utils/productHelpers";
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+const baseUrl = getApiBaseUrl();
 
 /* ─── Sidebar nav items ─────────────────────────────────────────── */
 const NAV_ITEMS = [
