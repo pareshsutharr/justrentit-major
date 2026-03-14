@@ -22,6 +22,8 @@ export const getApiBaseUrl = () => {
 
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return "";
+  if (imagePath.startsWith("https//")) return imagePath.replace(/^https\/\//, "https://");
+  if (imagePath.startsWith("http//")) return imagePath.replace(/^http\/\//, "http://");
   if (imagePath.startsWith("http")) return imagePath;
   const baseUrl = getApiBaseUrl();
   const normalizedPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;

@@ -26,6 +26,12 @@ const parseBooleanField = (value, fallback = false) => {
     return value === "true";
 };
 
+const parseNumberField = (value, fallback = 0) => {
+    if (value === undefined || value === null || value === "") return fallback;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+};
+
 const parseLocationField = (body) => {
     if (body.location) {
         if (typeof body.location === "string") {
@@ -137,38 +143,49 @@ const updateProduct = async (req, res) => {
         const product = await RentProduct.findById(productId);
         if (!product) return res.status(404).json({ success: false, message: "Product not found" });
 
-        // In a real app, verify req.user._id === product.userId
+        if (String(product.userId) !== String(req.user._id)) {
+            return res.status(403).json({ success: false, message: "Not authorized to update this product" });
+        }
 
-        const updates = { ...req.body };
+        const updates = {};
         if (req.files && req.files.length > 0) {
             updates.images = req.files.map((file) => `/uploads/${file.filename}`);
         }
 
-        if (updates.category) {
-            updates.category = parseArrayField(updates.category);
+        const allowedStringFields = ["name", "description", "rentalDuration", "condition"];
+        allowedStringFields.forEach((field) => {
+            if (typeof req.body[field] === "string" && req.body[field].trim()) {
+                updates[field] = req.body[field].trim();
+            }
+        });
+
+        ["rentalPrice", "securityDeposit", "sellingPrice"].forEach((field) => {
+            if (req.body[field] !== undefined) {
+                updates[field] = parseNumberField(req.body[field], product[field] || 0);
+            }
+        });
+
+        if (req.body.category !== undefined) {
+            updates.category = parseArrayField(req.body.category);
         }
 
-        if (updates.location || updates.country || updates.state || updates.area || updates.pincode) {
+        if (req.body.location || req.body.country || req.body.state || req.body.area || req.body.pincode) {
             updates.location = {
                 ...product.location?.toObject?.(),
-                ...parseLocationField(updates),
+                ...parseLocationField(req.body),
             };
-            delete updates.country;
-            delete updates.state;
-            delete updates.area;
-            delete updates.pincode;
         }
 
-        if (updates.available !== undefined) {
-            updates.available = parseBooleanField(updates.available, product.available);
+        if (req.body.available !== undefined) {
+            updates.available = parseBooleanField(req.body.available, product.available);
         }
 
-        if (updates.isForSale !== undefined) {
-            updates.isForSale = parseBooleanField(updates.isForSale, product.isForSale);
+        if (req.body.isForSale !== undefined) {
+            updates.isForSale = parseBooleanField(req.body.isForSale, product.isForSale);
         }
 
-        if (updates.featured !== undefined) {
-            updates.featured = parseBooleanField(updates.featured, product.featured);
+        if (req.body.featured !== undefined) {
+            updates.featured = parseBooleanField(req.body.featured, product.featured);
         }
 
         const updatedProduct = await RentProduct.findByIdAndUpdate(productId, updates, { new: true });

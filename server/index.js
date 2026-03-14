@@ -27,6 +27,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const productManagement = require("./routes/productManagement");
 const RentalManagement = require("./routes/RentalManagement");
 const invoiceRoutes = require("./routes/invoices");
+const dashboardRoutes = require("./routes/dashboard");
 
 // Middleware
 const { verifyToken } = require("./middleware/auth");
@@ -87,6 +88,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/chat", verifyToken, chatRoutes);
 app.use("/api/ratings", ratingRoutes);
 app.use("/api/invoices", invoiceRoutes);
+app.use("/api", dashboardRoutes);
 app.use("/api/admin", adminStatsRoutes);
 app.use("/api/admin/users", adminRoutes);
 app.use("/api/admin/products", productManagement);
