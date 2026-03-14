@@ -5,6 +5,7 @@ import ProductGrid from "../../components/products/ProductGrid";
 import { FiHeart } from "react-icons/fi";
 import { getFavoriteProductIds } from "../../utils/favorites";
 import { getApiBaseUrl, normalizeListProduct } from "../../utils/productHelpers";
+import Seo from "../../components/seo/Seo";
 
 const baseUrl = getApiBaseUrl();
 
@@ -53,6 +54,12 @@ const FavoritesPage = () => {
 
   return (
     <AppLayout>
+      <Seo
+        title="Your Favorites"
+        description="Saved rental listings in your JustRentIt account."
+        path="/favorites"
+        robots="noindex,nofollow"
+      />
       <div className="bg-white min-h-screen pt-8 pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8 border-b border-gray-100 pb-8">

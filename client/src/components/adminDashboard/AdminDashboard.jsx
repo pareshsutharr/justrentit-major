@@ -27,6 +27,7 @@ import RentalManagement from "./RentalManagement";
 import { FaDownload } from "react-icons/fa";
 import { Chart } from "chart.js";
 import Navbar from "../layout/Navbar";
+import Seo from "../seo/Seo";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 function AdminDashboard() {
   const [activeComponent, setActiveComponent] = useState("dashboard");
@@ -96,6 +97,12 @@ function AdminDashboard() {
 
   return (
     <div className="dashboard-container">
+     <Seo
+      title="Admin Dashboard"
+      description="Private admin dashboard for JustRentIt covering users, products, rentals, analytics, and reports."
+      path="/admin"
+      robots="noindex,nofollow"
+     />
      
      <Navbar/>
 

@@ -17,10 +17,14 @@ axios.interceptors.response.use(
   error => {
     const status = error?.response?.status;
     const message = error?.response?.data?.message || "";
-    if (status === 401 && (message.includes("expired") || message.includes("Session expired"))) {
-      // Show alert and redirect
-      alert('Your session has expired. Please login again.');
+    const isAuthRoute = typeof error?.config?.url === "string" && error.config.url.includes("/api/auth/");
+
+    if (status === 401 && !isAuthRoute) {
+      const authMessage = message || error?.response?.data?.error || "Your session is no longer valid. Please login again.";
+      alert(authMessage.includes("expired") ? authMessage : "Your session has expired. Please login again.");
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userId');
       window.location.href = '/login'; 
     }
     return Promise.reject(error);

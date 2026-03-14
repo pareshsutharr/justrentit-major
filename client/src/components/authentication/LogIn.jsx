@@ -6,6 +6,7 @@ import { FiEye, FiEyeOff, FiLock, FiMail, FiArrowRight } from "react-icons/fi";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import "react-toastify/dist/ReactToastify.css";
 import mainLogo from "../../../images/jri-logo.png";
+import Seo from "../seo/Seo";
 
 const GOOGLE_CLIENT_ID_FIELD = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -60,6 +61,12 @@ function LogIn() {
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
+      <Seo
+        title="Login"
+        description="Sign in to JustRentIt to manage your listings, track rentals, chat with users, and access your dashboard."
+        path="/login"
+        robots="noindex,nofollow"
+      />
       {/* Premium Background Mesh */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-50 blur-[120px] rounded-full opacity-60" />

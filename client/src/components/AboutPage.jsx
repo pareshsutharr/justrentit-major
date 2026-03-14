@@ -5,10 +5,17 @@ import Header from './Header';
 import Footer from './Footer';
 import { NavLink } from 'react-router-dom';
 import './AboutPage.css';
+import Seo from './seo/Seo';
 
 const AboutPage = () => {
   return (
     <>
+    <Seo
+      title="About"
+      description="Learn about JustRentIt, a local rental marketplace that helps users rent, list, and manage products with trust, transparency, and admin oversight."
+      path="/about"
+      keywords={["about JustRentIt", "rental marketplace", "rent and lend platform", "local rental app"]}
+    />
     <Header/>
     <div className="about-page">
       <Container>

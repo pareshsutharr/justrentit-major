@@ -1,0 +1,17 @@
+{
+  "name": "JustRentIt",
+  "short_name": "JustRentIt",
+  "description": "Rent cameras, tools, party gear, electronics, and more from trusted local owners.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/jri-logo%20(3).svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

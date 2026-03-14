@@ -1,11 +1,11 @@
 import React, { useState, useEffect, Suspense } from "react";
 import axios from "axios";
-import Swal from "sweetalert2";
 import { format, formatDistance, differenceInHours } from "date-fns";
 import { Loader2, AlertCircle, Info, Clock, CheckCircle2, Star } from "lucide-react";
 import LoadingPage from "../loadingpages/LoadingPage";
 import RatingPopup from "./RatingPopup";
 import FilterComponent from "./FilterComponent";
+import { getImageUrl } from "../../utils/productHelpers";
 
 const RentalProgress = React.lazy(() => import("./RentalProgress"));
 
@@ -59,9 +59,7 @@ const RequestCard = ({ request, userId, isNew, onUpdate, onRateExperience }) => 
   const owner = request.owner || {};
   const isCompleted = request.status === "completed";
 
-  const imgSrc = product.images?.[0]
-    ? `${baseUrl}${product.images[0]}`
-    : null;
+  const imgSrc = getImageUrl(product.images?.[0]);
 
   return (
     <div className={`group relative bg-white rounded-[2.5rem] border transition-all duration-500 overflow-hidden ${isNew ? "border-indigo-200 shadow-2xl shadow-indigo-100/50" : "border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50"} ${isCompleted ? "opacity-60 grayscale-[0.2]" : ""}`}>
@@ -148,10 +146,11 @@ const RequestCard = ({ request, userId, isNew, onUpdate, onRateExperience }) => 
 
             {isCompleted && (
               <button
+                type="button"
                 onClick={() => onRateExperience(request)}
                 className="w-full flex items-center justify-center gap-3 py-5 rounded-[1.5rem] bg-indigo-600 text-[11px] font-black text-white uppercase tracking-[0.2em] shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
               >
-                <Star size={16} /> Finalize Account & Rate
+                <Star size={16} /> Rate Experience
               </button>
             )}
           </div>

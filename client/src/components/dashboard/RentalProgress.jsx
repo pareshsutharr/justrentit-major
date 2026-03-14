@@ -20,12 +20,10 @@ import {
   CheckCircle,
   AssignmentReturn,
   DoneAll,
-  Cancel,
 } from "@mui/icons-material";
 import axios from "axios";
 import Swal from "sweetalert2";
 import "./RentalRequests.css";
-import RatingPopup from "./RatingPopup";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 const statusSteps = [
   { label: "Pending", status: "pending", icon: <HourglassTop /> },
@@ -46,7 +44,6 @@ const RentalProgress = ({ request, userId, onUpdate }) => {
   const [otp, setOtp] = React.useState("");
   const [openDialog, setOpenDialog] = React.useState(false);
   const [currentAction, setCurrentAction] = React.useState(null);
-  const [showRating, setShowRating] = React.useState(false);
 
   const activeStep = statusSteps.findIndex(
     (step) => step.status === request.status
@@ -77,6 +74,10 @@ const RentalProgress = ({ request, userId, onUpdate }) => {
   const sendOTPNotification = async (phoneNumber, otp) => {
     try {
       // Implement SMS integration here
+      if (!phoneNumber) {
+        console.warn("OTP recipient phone number is missing");
+        return;
+      }
       console.log(`Sending OTP ${otp} to ${phoneNumber}`);
     } catch (error) {
       console.error("Failed to send OTP:", error);
@@ -94,7 +95,7 @@ const RentalProgress = ({ request, userId, onUpdate }) => {
 
       if (targetStatus === "in_transit") {
         await sendOTPNotification(
-          request.owner.phone,
+          request.requester?.phone,
           updatedRequest.deliveryOTP
         );
       }
@@ -265,31 +266,6 @@ const RentalProgress = ({ request, userId, onUpdate }) => {
             </Button>
           </Alert>
         )}
-      {/* <RatingPopup 
-    request={request} 
-    userId={userId} 
-    onClose={() => setShowRating(false)} 
-  /> */}
-      {/* 
-{request.status === 'completed' && isRenter && (
-  <Box sx={{ textAlign: 'center', mt: 2 }}>
-    <Button
-      variant="contained"
-      color="secondary"
-      onClick={() => setShowRating(true)}
-    >
-      Rate Experience
-    </Button>
-  </Box>
-)} */}
-
-      {/* {showRating && (
-  <RatingPopup 
-    request={request} 
-    userId={userId} 
-    onClose={() => setShowRating(false)} 
-  />
-)} */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
         <DialogContent>
           <Typography variant="h6" gutterBottom>

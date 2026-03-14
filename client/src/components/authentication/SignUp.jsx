@@ -7,6 +7,7 @@ import { FiEye, FiEyeOff, FiUser, FiMail, FiPhone, FiLock, FiCamera, FiArrowRigh
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import "react-toastify/dist/ReactToastify.css";
 import mainLogo from "../../../images/jri-logo.png";
+import Seo from "../seo/Seo";
 
 const GOOGLE_CLIENT_ID_FIELD = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -97,6 +98,12 @@ function SignUp() {
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
+      <Seo
+        title="Register"
+        description="Create your JustRentIt account to list products, request rentals, connect with local owners, and manage your rental activity."
+        path="/register"
+        robots="noindex,nofollow"
+      />
       {/* Premium Background Mesh */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-50 blur-[120px] rounded-full opacity-60" />

@@ -14,6 +14,7 @@ import RentalRequests from "./RentalRequests";
 import UserProfiles from "../UserProfiles";
 import Invoices from "./Invoices";
 import { getApiBaseUrl } from "../../utils/productHelpers";
+import Seo from "../seo/Seo";
 
 const baseUrl = getApiBaseUrl();
 
@@ -314,6 +315,12 @@ export default function Dashboard() {
 
   return (
     <div className="bg-slate-50 min-h-screen">
+      <Seo
+        title="User Dashboard"
+        description="Private JustRentIt dashboard for managing products, rental requests, messages, invoices, and profile."
+        path="/dashboard"
+        robots="noindex,nofollow"
+      />
       <div className="max-w-[var(--page-max-width)] mx-auto w-full px-4 py-6 sm:px-10 sm:py-10">
         <div className="relative flex min-h-[calc(100vh-10rem)] shadow-2xl shadow-indigo-100/20 rounded-[3rem] border border-white bg-white/80 backdrop-blur-xl overflow-hidden">
 

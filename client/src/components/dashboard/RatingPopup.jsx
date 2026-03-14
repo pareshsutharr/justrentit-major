@@ -1,11 +1,15 @@
 // components/RatingPopup.jsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Modal, Button, Rating, Textarea, Alert } from "@mantine/core";
 import axios from "axios";
 import Swal from "sweetalert2";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+const getStoredToken = () => localStorage.getItem("token") || "";
+
 const RatingPopup = ({ request, userId, onClose }) => {
-  const [open, setOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState("");
   const [ratingsToSubmit, setRatingsToSubmit] = useState({
     owner: false,
     product: false,
@@ -21,18 +25,33 @@ const RatingPopup = ({ request, userId, onClose }) => {
   useEffect(() => {
     if (!request?._id) return;
     const checkPendingRatings = async () => {
+      const token = getStoredToken();
+      if (!token) {
+        setAuthError("Please log in again to submit your review.");
+        setLoading(false);
+        return;
+      }
+
       try {
+        setLoading(true);
+        setAuthError("");
         const res = await axios.get(
           `${baseUrl}/api/ratings/check/${request._id}`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
         setRatingsToSubmit(res.data);
       } catch (err) {
-        console.error("Error checking ratings:", err);
+        if (err.response?.status === 401) {
+          setAuthError("Your session has expired. Please log in again to submit your review.");
+        } else {
+          setAuthError(err.response?.data?.error || "Unable to load review options right now.");
+        }
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -45,6 +64,12 @@ const RatingPopup = ({ request, userId, onClose }) => {
 
   const handleSubmit = async (type) => {
     try {
+      const token = getStoredToken();
+      if (!token) {
+        setAuthError("Please log in again to submit your review.");
+        return;
+      }
+
       if (!request?._id) {
         Swal.fire("Error!", "Rental request details are unavailable", "error");
         return;
@@ -84,7 +109,7 @@ const RatingPopup = ({ request, userId, onClose }) => {
       }
 
       await axios.post(`${baseUrl}/api/ratings`, payload, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const nextRatingsToSubmit = { ...ratingsToSubmit, [type]: false };
@@ -95,6 +120,10 @@ const RatingPopup = ({ request, userId, onClose }) => {
         onClose();
       }
     } catch (err) {
+      if (err.response?.status === 401) {
+        setAuthError("Your session has expired. Please log in again to submit your review.");
+        return;
+      }
       Swal.fire(
         "Error!",
         err.response?.data?.error || "Failed to submit rating",
@@ -105,15 +134,24 @@ const RatingPopup = ({ request, userId, onClose }) => {
 
   return (
     <Modal
-      opened={open}
-      onClose={() => {
-        setOpen(false);
-        onClose();
-      }}
+      opened={Boolean(request)}
+      onClose={onClose}
       title="Rate Your Experience"
       size="lg"
       centered
     >
+      {authError && (
+        <Alert color="red" mb="md">
+          {authError}
+        </Alert>
+      )}
+
+      {!loading && !Object.values(ratingsToSubmit).some(Boolean) && (
+        <Alert color="blue" mb="md">
+          All available reviews for this rental have already been submitted.
+        </Alert>
+      )}
+
       {ratingsToSubmit.owner && (
         <div className="mb-4">
           <h4>Rate Owner ({ownerName})</h4>
@@ -138,6 +176,7 @@ const RatingPopup = ({ request, userId, onClose }) => {
             mt="sm"
           />
           <Button
+            type="button"
             onClick={() => handleSubmit("owner")}
             disabled={ratings.owner.value === 0}
             mt="sm"
@@ -171,6 +210,7 @@ const RatingPopup = ({ request, userId, onClose }) => {
             mt="sm"
           />
           <Button
+            type="button"
             onClick={() => handleSubmit("product")}
             disabled={ratings.product.value === 0}
             mt="sm"
@@ -204,6 +244,7 @@ const RatingPopup = ({ request, userId, onClose }) => {
             mt="sm"
           />
           <Button
+            type="button"
             onClick={() => handleSubmit("renter")}
             disabled={ratings.renter.value === 0}
             mt="sm"

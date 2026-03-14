@@ -22,8 +22,8 @@ router.get("/", async (req, res) => {
 
     const requests = await RentalRequest.find(query)
       .populate("product", "name images rentalPrice description")
-      .populate("requester", "name profilePhoto")
-      .populate("owner", "name profilePhoto");
+      .populate("requester", "name profilePhoto phone")
+      .populate("owner", "name profilePhoto phone");
 
     res.json({ success: true, requests });
   } catch (error) {

@@ -13,6 +13,7 @@ import {
 } from '../../utils/productHelpers';
 import { isFavoriteProduct, toggleFavoriteProduct } from '../../utils/favorites';
 import RentalRequestForm from '../../components/products/filter/ProductModal/RentalRequestForm';
+import Seo, { absoluteUrl } from '../../components/seo/Seo';
 
 const baseUrl = getApiBaseUrl();
 
@@ -137,6 +138,12 @@ const ProductPage = () => {
   if (loading) {
     return (
       <AppLayout>
+        <Seo
+          title="Loading Product"
+          description="Loading rental listing details on JustRentIt."
+          path={`/product/${id}`}
+          robots="noindex,follow"
+        />
         <div className="min-h-screen pt-32 pb-24 max-w-7xl mx-auto px-6">
           <div className="animate-pulse grid grid-cols-1 lg:grid-cols-2 gap-16">
             <div className="bg-slate-50 aspect-square rounded-[3rem] border border-slate-100 shadow-premium"></div>
@@ -158,6 +165,12 @@ const ProductPage = () => {
   if (!product) {
     return (
       <AppLayout>
+        <Seo
+          title="Product Unavailable"
+          description="This rental listing is unavailable or has been removed from JustRentIt."
+          path={`/product/${id}`}
+          robots="noindex,follow"
+        />
         <div className="min-h-screen flex items-center justify-center flex-col gap-6">
           <div className="w-24 h-24 rounded-[2rem] bg-slate-50 flex items-center justify-center text-slate-300">
             <Info size={40} />
@@ -176,6 +189,37 @@ const ProductPage = () => {
 
   return (
     <AppLayout>
+      <Seo
+        title={product.name}
+        description={product.description || `Rent ${product.name} on JustRentIt.`}
+        path={`/product/${id}`}
+        image={product.images?.[0] || undefined}
+        type="product"
+        keywords={[product.name, product.category, product.location, "rent product", "JustRentIt"].filter(Boolean)}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          description: product.description,
+          image: (product.images || []).map((image) => absoluteUrl(image)),
+          brand: {
+            "@type": "Brand",
+            name: "JustRentIt"
+          },
+          offers: {
+            "@type": "Offer",
+            priceCurrency: "INR",
+            price: Number(product.rentalPrice || 0),
+            availability: product.available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+            url: absoluteUrl(`/product/${id}`)
+          },
+          aggregateRating: product.reviews > 0 ? {
+            "@type": "AggregateRating",
+            ratingValue: Number(product.rating || 0),
+            reviewCount: Number(product.reviews || 0)
+          } : undefined
+        }}
+      />
       <div className="relative pt-24 pb-32">
         {/* Background Mesh */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-50/20 blur-[120px] rounded-full -z-10" />

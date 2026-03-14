@@ -6,6 +6,7 @@ import { FiSearch, FiSliders, FiX } from 'react-icons/fi';
 import axios from 'axios';
 import { useDebounce } from '../../hooks/useDebounce';
 import { getApiBaseUrl, normalizeListProduct } from '../../utils/productHelpers';
+import Seo from '../../components/seo/Seo';
 
 const baseUrl = getApiBaseUrl();
 const DEFAULT_FILTERS = {
@@ -81,6 +82,12 @@ const SearchPage = () => {
 
   return (
     <AppLayout>
+      <Seo
+        title="Explore Rentals"
+        description="Browse rentable products by category, price, and rating on JustRentIt. Discover local listings for electronics, tools, camping gear, party items, and more."
+        path="/products"
+        keywords={["rentals", "browse rental products", "local rental listings", "rent electronics", "rent tools"]}
+      />
       <div className="bg-white min-h-screen pt-12 pb-24 relative overflow-hidden">
         {/* Subtle Background Mesh */}
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-50/50 blur-[100px] rounded-full -z-10" />

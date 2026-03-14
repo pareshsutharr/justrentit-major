@@ -22,11 +22,18 @@ export const getApiBaseUrl = () => {
 
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return "";
-  if (imagePath.startsWith("https//")) return imagePath.replace(/^https\/\//, "https://");
-  if (imagePath.startsWith("http//")) return imagePath.replace(/^http\/\//, "http://");
-  if (imagePath.startsWith("http")) return imagePath;
+  const normalizedValue = String(imagePath).trim();
+  if (!normalizedValue) return "";
+  if (normalizedValue.startsWith("https//")) return normalizedValue.replace(/^https\/\//, "https://");
+  if (normalizedValue.startsWith("http//")) return normalizedValue.replace(/^http\/\//, "http://");
+  if (normalizedValue.startsWith("//")) return `https:${normalizedValue}`;
+  if (normalizedValue.startsWith("images.unsplash.com/")) return `https://${normalizedValue}`;
+  if (normalizedValue.startsWith("photo-") && normalizedValue.includes("?")) {
+    return `https://images.unsplash.com/${normalizedValue}`;
+  }
+  if (normalizedValue.startsWith("http")) return normalizedValue;
   const baseUrl = getApiBaseUrl();
-  const normalizedPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
+  const normalizedPath = normalizedValue.startsWith("/") ? normalizedValue : `/${normalizedValue}`;
   return `${baseUrl}${normalizedPath}`;
 };
 
