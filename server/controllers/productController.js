@@ -3,18 +3,64 @@ const Notification = require("../models/notificationModel");
 const Category = require("../models/Category");
 const mongoose = require("mongoose");
 
+const parseArrayField = (value) => {
+    if (value === undefined || value === null || value === "") return [];
+    if (Array.isArray(value)) return value;
+
+    if (typeof value === "string") {
+        try {
+            const parsed = JSON.parse(value);
+            if (Array.isArray(parsed)) return parsed;
+            return parsed ? [parsed] : [];
+        } catch (error) {
+            return [value];
+        }
+    }
+
+    return [value];
+};
+
+const parseBooleanField = (value, fallback = false) => {
+    if (value === undefined || value === null || value === "") return fallback;
+    if (typeof value === "boolean") return value;
+    return value === "true";
+};
+
+const parseLocationField = (body) => {
+    if (body.location) {
+        if (typeof body.location === "string") {
+            try {
+                return JSON.parse(body.location);
+            } catch (error) {
+                return {
+                    country: body.country || "",
+                    state: body.state || "",
+                    area: body.area || "",
+                    pincode: body.pincode || "",
+                };
+            }
+        }
+
+        if (typeof body.location === "object") {
+            return body.location;
+        }
+    }
+
+    return {
+        country: body.country || "",
+        state: body.state || "",
+        area: body.area || "",
+        pincode: body.pincode || "",
+    };
+};
+
 const addProduct = async (req, res) => {
     try {
         const {
             name,
             description,
             rentalPrice,
-            category,
             available,
-            country,
-            state,
-            area,
-            pincode,
             securityDeposit,
             rentalDuration,
             condition,
@@ -22,28 +68,26 @@ const addProduct = async (req, res) => {
             sellingPrice,
         } = req.body;
 
-        const images = req.files.map((file) => `/uploads/${file.filename}`);
-        const isAvailable = available === "true";
+        const images = (req.files || []).map((file) => `/uploads/${file.filename}`);
+        const normalizedCategory = parseArrayField(req.body.category);
+        const location = parseLocationField(req.body);
+        const isAvailable = parseBooleanField(available, true);
+        const isProductForSale = parseBooleanField(isForSale, false);
 
         const newProduct = new RentProduct({
             name,
             description,
             rentalPrice,
-            category,
+            category: normalizedCategory,
             userId: req.user._id,
             images,
             available: isAvailable,
             securityDeposit,
             rentalDuration,
             condition,
-            isForSale,
+            isForSale: isProductForSale,
             sellingPrice,
-            location: {
-                country,
-                state,
-                area,
-                pincode,
-            },
+            location,
         });
 
         const savedProduct = await newProduct.save();
@@ -101,12 +145,30 @@ const updateProduct = async (req, res) => {
         }
 
         if (updates.category) {
-            try {
-                const rawCategory = typeof updates.category === "string" ? JSON.parse(updates.category) : updates.category;
-                updates.category = Array.isArray(rawCategory) ? rawCategory : [rawCategory];
-            } catch (e) {
-                // assume it's already an array or single ID
-            }
+            updates.category = parseArrayField(updates.category);
+        }
+
+        if (updates.location || updates.country || updates.state || updates.area || updates.pincode) {
+            updates.location = {
+                ...product.location?.toObject?.(),
+                ...parseLocationField(updates),
+            };
+            delete updates.country;
+            delete updates.state;
+            delete updates.area;
+            delete updates.pincode;
+        }
+
+        if (updates.available !== undefined) {
+            updates.available = parseBooleanField(updates.available, product.available);
+        }
+
+        if (updates.isForSale !== undefined) {
+            updates.isForSale = parseBooleanField(updates.isForSale, product.isForSale);
+        }
+
+        if (updates.featured !== undefined) {
+            updates.featured = parseBooleanField(updates.featured, product.featured);
         }
 
         const updatedProduct = await RentProduct.findByIdAndUpdate(productId, updates, { new: true });

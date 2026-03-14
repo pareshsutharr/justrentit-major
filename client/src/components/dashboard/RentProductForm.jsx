@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import LoadingForLocation from '../loadingpages/LoadingForLocation';
 import { ChevronDown, Upload, Check, Camera, DollarSign, MapPin, Tag, Shield, Info, Image as ImageIcon, X } from 'lucide-react';
+import { getApiBaseUrl } from '../../utils/productHelpers';
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+const baseUrl = getApiBaseUrl();
 
 /* ─── Generic form field wrappers ───────────────────────────────── */
 const Label = ({ children, required }) => (
@@ -115,7 +114,7 @@ const RentProductForm = () => {
     Array.from(images).forEach((img) => data.append("images", img));
 
     try {
-      await axios.post(`${baseUrl}/rentproduct/add`, data, {
+      await axios.post(`${baseUrl}/api/rentproduct/add`, data, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Asset live on the marketplace!");

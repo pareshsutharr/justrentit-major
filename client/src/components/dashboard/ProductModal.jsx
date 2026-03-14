@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "bootstrap/dist/css/bootstrap.min.css";
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+import { getApiBaseUrl } from "../../utils/productHelpers";
+
+const baseUrl = getApiBaseUrl();
 function ProductModal({ product, onClose, onSave }) {
   const [editedProduct, setEditedProduct] = useState({
     name: "",
@@ -31,7 +33,7 @@ function ProductModal({ product, onClose, onSave }) {
         );
         const receivedCategories = Array.isArray(response.data)
           ? response.data
-          : response.data?.data || [];
+          : response.data?.categories || response.data?.data || [];
         setCategories(receivedCategories);
       } catch (error) {
         toast.error("Failed to load categories");
@@ -42,11 +44,16 @@ function ProductModal({ product, onClose, onSave }) {
 
     const fetchCountries = async () => {
       try {
-        const response = await axios.get("https://restcountries.com/v3.1/all");
-        setCountries(response.data);
+        const response = await axios.get("https://restcountries.com/v3.1/all?fields=name,cca3");
+        setCountries(
+          (response.data || [])
+            .filter((country) => country?.name?.common)
+            .sort((left, right) => left.name.common.localeCompare(right.name.common))
+        );
       } catch (error) {
         toast.error("Failed to load countries");
         console.error("Error fetching countries:", error);
+        setCountries([]);
       }
     };
 
@@ -172,10 +179,16 @@ function ProductModal({ product, onClose, onSave }) {
     imageFiles.forEach((file) => formData.append("images", file));
 
     try {
+      const token = localStorage.getItem("token");
       const response = await axios.put(
           `${baseUrl}/api/update-product/${editedProduct._id}`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
       if (response.data.success) {
