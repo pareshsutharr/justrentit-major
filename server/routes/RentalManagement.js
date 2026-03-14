@@ -1,5 +1,6 @@
 const { verifyAdmin, verifyToken, adminCheck } = require("../middleware/auth");
 const RentalRequest = require("../models/RentalRequest");
+const RentProduct = require("../models/RentProduct");
 const express = require('express');
 const router = express.Router();
 // Rental Routes
@@ -48,6 +49,25 @@ router.get('/', verifyToken, adminCheck, async (req, res) => {
   
       await request.save();
       res.json(request);
+    } catch (error) {
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  router.delete('/:id', verifyToken, adminCheck, async (req, res) => {
+    try {
+      const request = await RentalRequest.findById(req.params.id);
+
+      if (!request) {
+        return res.status(404).json({ message: 'Request not found' });
+      }
+
+      if (request.product && ['approved', 'in_transit', 'delivered', 'in_use'].includes(request.status)) {
+        await RentProduct.findByIdAndUpdate(request.product, { available: true });
+      }
+
+      await RentalRequest.findByIdAndDelete(req.params.id);
+      res.json({ success: true, message: 'Rental request deleted successfully' });
     } catch (error) {
       res.status(500).json({ message: 'Server error' });
     }

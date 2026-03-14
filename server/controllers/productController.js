@@ -179,8 +179,40 @@ const updateProduct = async (req, res) => {
     }
 };
 
+const deleteProduct = async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const product = await RentProduct.findById(productId);
+
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+
+        if (String(product.userId) !== String(req.user._id)) {
+            return res.status(403).json({ success: false, message: "Not authorized to delete this product" });
+        }
+
+        await RentProduct.findByIdAndDelete(productId);
+
+        await Notification.create({
+            userId: req.user._id,
+            message: `Your product "${product.name}" has been deleted`,
+            type: "product_deleted",
+            metadata: {
+                productId,
+            }
+        });
+
+        res.json({ success: true, message: "Product deleted successfully" });
+    } catch (err) {
+        console.error("Delete product error:", err);
+        res.status(500).json({ success: false, message: "Error deleting product" });
+    }
+};
+
 module.exports = {
     addProduct,
     getMyProducts,
     updateProduct,
+    deleteProduct,
 };

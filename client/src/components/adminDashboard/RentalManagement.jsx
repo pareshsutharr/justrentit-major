@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Modal, Button, Table, Form, Badge } from 'react-bootstrap';
+import Swal from 'sweetalert2';
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 const RentalManagement = () => {
   const [rentalRequests, setRentalRequests] = useState([]);
@@ -27,11 +28,7 @@ const RentalManagement = () => {
     completed: 'success'
   };
 
-  useEffect(() => {
-    fetchRentalRequests();
-  }, [filters]);
-
-  const fetchRentalRequests = async () => {
+  const fetchRentalRequests = useCallback(async () => {
     try {
       const response = await axios.get(`${baseUrl}/api/admin/rentals`, {
         params: filters,
@@ -39,11 +36,15 @@ const RentalManagement = () => {
       });
       setRentalRequests(response.data);
       setLoading(false);
-    } catch (error) {
+    } catch {
       toast.error('Failed to fetch rental requests');
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    fetchRentalRequests();
+  }, [fetchRentalRequests]);
 
   const handleStatusUpdate = async () => {
     try {
@@ -55,8 +56,38 @@ const RentalManagement = () => {
       toast.success('Status updated successfully');
       fetchRentalRequests();
       setShowModal(false);
-    } catch (error) {
+    } catch {
       toast.error('Failed to update status');
+    }
+  };
+
+  const handleDeleteRequest = async () => {
+    if (!selectedRequest?._id) return;
+
+    const result = await Swal.fire({
+      title: 'Delete rental request?',
+      text: 'This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, delete it',
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await axios.delete(
+        `${baseUrl}/api/admin/rentals/${selectedRequest._id}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+
+      setRentalRequests((prev) => prev.filter((request) => request._id !== selectedRequest._id));
+      setShowModal(false);
+      setSelectedRequest(null);
+      toast.success('Rental request deleted successfully');
+    } catch {
+      toast.error('Failed to delete rental request');
     }
   };
 
@@ -216,6 +247,9 @@ const RentalManagement = () => {
           )}
         </Modal.Body>
         <Modal.Footer>
+          <Button variant="danger" onClick={handleDeleteRequest}>
+            Delete Request
+          </Button>
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Close
           </Button>

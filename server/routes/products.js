@@ -96,5 +96,6 @@ router.get("/categories", async (req, res) => {
 router.post("/rentproduct/add", verifyToken, upload.array("images", 5), productController.addProduct);
 router.get("/my-products", verifyToken, productController.getMyProducts);
 router.put("/update-product/:productId", verifyToken, upload.array("images", 5), productController.updateProduct);
+router.delete("/delete-product/:productId", verifyToken, productController.deleteProduct);
 
 module.exports = router;

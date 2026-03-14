@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -16,8 +16,9 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 import LoadingPage from "../loadingpages/LoadingPage";
+import { getApiBaseUrl } from "../../utils/productHelpers";
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+const baseUrl = getApiBaseUrl();
 
 /* ─── Status badge helpers ──────────────────────────────────────── */
 const conditionConfig = {
@@ -214,7 +215,7 @@ export default function MyProduct() {
         const u = localStorage.getItem("user");
         if (u) { const d = JSON.parse(u); if (d._id) return d._id; }
         const id = localStorage.getItem("userId");
-        return id ? id.replace(/['\"]+/g, "") : null;
+        return id ? id.replace(/['"]+/g, "") : null;
       } catch { return null; }
     })();
 
@@ -223,7 +224,9 @@ export default function MyProduct() {
       setLoading(false);
       return;
     }
-    axios.get(`${baseUrl}/api/my-products?userId=${userId}`)
+    axios.get(`${baseUrl}/api/my-products?userId=${userId}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
       .then(({ data }) => {
         if (data.success && Array.isArray(data.products)) {
           setProducts(data.products);
@@ -247,7 +250,9 @@ export default function MyProduct() {
       confirmButtonText: "Yes, delete",
     }).then(({ isConfirmed }) => {
       if (!isConfirmed) return;
-      axios.delete(`${baseUrl}/api/delete-product/${productId}`)
+      axios.delete(`${baseUrl}/api/delete-product/${productId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      })
         .then(({ data }) => {
           if (data.success) {
             setProducts((prev) => {

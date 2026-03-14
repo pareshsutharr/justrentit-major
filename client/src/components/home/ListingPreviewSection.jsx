@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FiStar, FiMapPin, FiArrowRight } from 'react-icons/fi';
+import { FiStar, FiMapPin, FiArrowRight, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import axios from 'axios';
 import {
   formatINR,
@@ -14,6 +14,26 @@ const baseUrl = getApiBaseUrl();
 const ListingPreviewSection = () => {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [itemsPerView, setItemsPerView] = useState(4);
+
+  useEffect(() => {
+    const updateItemsPerView = () => {
+      if (window.innerWidth >= 1024) {
+        setItemsPerView(4);
+        return;
+      }
+      if (window.innerWidth >= 640) {
+        setItemsPerView(2);
+        return;
+      }
+      setItemsPerView(1);
+    };
+
+    updateItemsPerView();
+    window.addEventListener('resize', updateItemsPerView);
+    return () => window.removeEventListener('resize', updateItemsPerView);
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -29,8 +49,7 @@ const ListingPreviewSection = () => {
 
         const normalizedProducts = products
           .map((product) => normalizeListProduct(product, categoryMap))
-          .filter((product) => product.available)
-          .slice(0, 4);
+          .filter((product) => product.available);
 
         setListings(normalizedProducts);
       } catch (error) {
@@ -43,6 +62,15 @@ const ListingPreviewSection = () => {
 
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    const maxIndex = Math.max(0, listings.length - itemsPerView);
+    setCurrentIndex((prev) => Math.min(prev, maxIndex));
+  }, [itemsPerView, listings.length]);
+
+  const maxIndex = Math.max(0, listings.length - itemsPerView);
+  const canSlide = listings.length > itemsPerView;
+  const cardWidth = 100 / itemsPerView;
 
   return (
     <div className="bg-white py-24 sm:py-32">
@@ -58,64 +86,130 @@ const ListingPreviewSection = () => {
             </p>
           </div>
           <div className="hidden md:block">
-            <Link to="/products" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-slate-200 text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
-              View all marketplace <FiArrowRight />
-            </Link>
+            <div className="flex items-center gap-3">
+              {canSlide && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+                    disabled={currentIndex === 0}
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Previous listings"
+                  >
+                    <FiChevronLeft />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentIndex((prev) => Math.min(maxIndex, prev + 1))}
+                    disabled={currentIndex >= maxIndex}
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Next listings"
+                  >
+                    <FiChevronRight />
+                  </button>
+                </>
+              )}
+              <Link to="/products" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-slate-200 text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
+                View all marketplace <FiArrowRight />
+              </Link>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {loading ? (
-            Array.from({ length: 4 }).map((_, i) => (
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="animate-pulse">
                 <div className="bg-slate-100 rounded-[2rem] aspect-[4/5] mb-6"></div>
                 <div className="h-5 bg-slate-100 rounded-full w-3/4 mb-3"></div>
                 <div className="h-4 bg-slate-100 rounded-full w-1/2 mb-6"></div>
                 <div className="h-8 bg-slate-100 rounded-xl w-1/3"></div>
               </div>
-            ))
-          ) : (
-            listings.map((item) => (
-              <Link key={item._id} to={`/product/${item._id}`} className="group flex flex-col">
-                <div className="relative w-full aspect-[4/5] rounded-[2rem] overflow-hidden bg-slate-100 mb-6 shadow-sm border border-slate-100">
-                  <img
-                    src={getImageUrl(item.images?.[0]) || 'https://via.placeholder.com/640x800?text=No+Image'}
-                    alt={item.name}
-                    className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"
-                  />
-                  <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-bold text-slate-900 shadow-premium">
-                    {formatINR(item.rentalPrice)} / {item.rentalDuration || 'day'}
-                  </div>
-                  <div className="absolute bottom-4 left-4 right-4 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                    <div className="bg-indigo-600 text-white text-center py-2.5 rounded-xl font-bold text-sm shadow-xl shadow-indigo-200">
-                      View Details
-                    </div>
-                  </div>
-                </div>
+            ))}
+          </div>
+        ) : listings.length > 0 ? (
+          <div className="space-y-6">
+            <div className="overflow-hidden">
+              <div
+                className="flex transition-transform duration-500 ease-out"
+                style={{ transform: `translateX(-${currentIndex * cardWidth}%)` }}
+              >
+                {listings.map((item) => (
+                  <div
+                    key={item._id}
+                    className="shrink-0 px-3"
+                    style={{ flex: `0 0 ${cardWidth}%`, maxWidth: `${cardWidth}%` }}
+                  >
+                    <Link to={`/product/${item._id}`} className="group flex h-full flex-col">
+                      <div className="relative w-full aspect-[4/5] rounded-[2rem] overflow-hidden bg-slate-100 mb-6 shadow-sm border border-slate-100">
+                        <img
+                          src={getImageUrl(item.images?.[0]) || 'https://via.placeholder.com/640x800?text=No+Image'}
+                          alt={item.name}
+                          className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"
+                        />
+                        <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-bold text-slate-900 shadow-premium">
+                          {formatINR(item.rentalPrice)} / {item.rentalDuration || 'day'}
+                        </div>
+                        <div className="absolute bottom-4 left-4 right-4 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                          <div className="bg-indigo-600 text-white text-center py-2.5 rounded-xl font-bold text-sm shadow-xl shadow-indigo-200">
+                            View Details
+                          </div>
+                        </div>
+                      </div>
 
-                <div className="flex justify-between items-start mb-2 px-1">
-                  <h3 className="font-bold text-slate-900 text-xl truncate pr-2 group-hover:text-indigo-600 transition-colors">
-                    {item.name}
-                  </h3>
-                  <div className="flex items-center gap-1.5 text-sm font-bold text-slate-900 shrink-0 bg-slate-50 px-2 py-1 rounded-lg">
-                    <FiStar className="fill-yellow-400 text-yellow-400 w-3.5 h-3.5" />
-                    {item.rating?.toFixed ? item.rating.toFixed(1) : (item.rating || '5.0')}
-                  </div>
-                </div>
+                      <div className="flex justify-between items-start mb-2 px-1">
+                        <h3 className="font-bold text-slate-900 text-xl truncate pr-2 group-hover:text-indigo-600 transition-colors">
+                          {item.name}
+                        </h3>
+                        <div className="flex items-center gap-1.5 text-sm font-bold text-slate-900 shrink-0 bg-slate-50 px-2 py-1 rounded-lg">
+                          <FiStar className="fill-yellow-400 text-yellow-400 w-3.5 h-3.5" />
+                          {item.rating?.toFixed ? item.rating.toFixed(1) : (item.rating || '5.0')}
+                        </div>
+                      </div>
 
-                <div className="flex text-sm font-medium text-slate-500 items-center justify-between mt-auto px-1">
-                  <span className="flex items-center gap-1.5">
-                    <FiMapPin className="text-slate-400 w-4 h-4" />
-                    {item.location || 'Local'}
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full border border-indigo-100">
-                    {item.category}
-                  </span>
-                </div>
-              </Link>
-            ))
-          )}
-        </div>
+                      <div className="flex text-sm font-medium text-slate-500 items-center justify-between mt-auto px-1">
+                        <span className="flex items-center gap-1.5">
+                          <FiMapPin className="text-slate-400 w-4 h-4" />
+                          {item.location || 'Local'}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full border border-indigo-100">
+                          {item.category}
+                        </span>
+                      </div>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {canSlide && (
+              <div className="flex items-center justify-center gap-3 md:hidden">
+                <button
+                  type="button"
+                  onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+                  disabled={currentIndex === 0}
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Previous listings"
+                >
+                  <FiChevronLeft />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentIndex((prev) => Math.min(maxIndex, prev + 1))}
+                  disabled={currentIndex >= maxIndex}
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Next listings"
+                >
+                  <FiChevronRight />
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-slate-500">
+            No featured products available right now.
+          </div>
+        )}
 
         <div className="mt-12 md:hidden">
           <Link to="/products" className="flex items-center justify-center gap-2 w-full text-center bg-slate-900 text-white font-bold py-4 rounded-2xl transition-all shadow-lg active:scale-[0.98]">
