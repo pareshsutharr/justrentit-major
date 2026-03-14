@@ -28,19 +28,37 @@ JustRentIt is a rental platform built with a separate `client` and `server` appl
 
 ## Screenshots / UI Preview
 
-> These images are project assets included in the repository and used here as the README preview section.
+These screenshots are sourced from the repository's `images-ss/` folder.
 
-### Landing Experience
+### Landing Page
 
-![Landing Preview](client/src/assets/images/hero-illustration.png)
+![Landing Page](images-ss/landing-page.png)
 
-### How It Works
+Modern homepage with hero search, featured browsing, favorites, notifications, and premium marketplace branding.
 
-![How It Works Preview](client/src/assets/images/how-it-works-illustration.png)
+### User Dashboard
 
-### CTA / Listing Preview
+![User Dashboard](images-ss/user-dashboard.png)
 
-![CTA Preview](client/src/assets/images/cta-illustration.png)
+Command center for product owners to manage listings, requests, earnings, messages, invoices, and account activity.
+
+### Marketplace / Explore
+
+![Marketplace Explore](images-ss/marketplace-explore.png)
+
+Search and discovery experience with category filters, pricing cards, ratings, and product location metadata.
+
+### Admin Analytics Dashboard
+
+![Admin Analytics Dashboard](images-ss/admin-analytics.png)
+
+Admin-side analytics view covering user growth, product counts, active rentals, and visual reporting with charts.
+
+### Admin Profile
+
+![Admin Profile](images-ss/admin-profile.png)
+
+Profile management screen for identity details, contact information, verification state, and account controls.
 
 ## Key Features
 
