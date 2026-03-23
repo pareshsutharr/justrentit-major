@@ -12,7 +12,17 @@ dotenv.config();
 
 // Models (Required for Socket.io or direct logic)
 const UserModel = require("./models/Users");
-const ChatMessage = require("./models/ChatMessage");
+const {
+  addUserSocket,
+  removeUserSocket,
+  isUserOnline
+} = require("./utils/chatPresence");
+const {
+  createChatMessage,
+  ensureConversationForUsers,
+  markConversationAsDelivered,
+  markConversationAsSeen
+} = require("./utils/chatService");
 
 // Router Imports
 const authRoutes = require("./routes/authRoutes");
@@ -125,26 +135,34 @@ io.use(async (socket, next) => {
 
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.user._id}`);
-
-  socket.on("joinChat", (userId) => {
-    socket.join(userId);
+  addUserSocket(socket.user._id, socket.id);
+  socket.join(socket.user._id.toString());
+  io.emit("presence:update", {
+    userId: socket.user._id.toString(),
+    isOnline: true
   });
 
-  socket.on("sendMessage", async ({ receiverId, content }) => {
-    try {
-      const message = new ChatMessage({
-        sender: socket.user._id,
-        receiver: receiverId,
-        content,
-        read: false
-      });
-      await message.save();
-      const populatedMessage = await ChatMessage.findById(message._id)
-        .populate("sender", "name profilePhoto")
-        .populate("receiver", "name profilePhoto");
+  socket.on("joinChat", (userId) => {
+    if (String(userId) !== socket.user._id.toString()) return;
+    socket.join(String(userId));
+  });
 
-      io.to(receiverId).emit("receiveMessage", populatedMessage);
-      socket.emit("receiveMessage", populatedMessage);
+  socket.on("sendMessage", async ({ receiverId, content, messageType = "text", imageUrl = "" }) => {
+    try {
+      if (!receiverId) return;
+      if (messageType === "text" && !String(content || "").trim()) return;
+      if (messageType === "image" && !String(imageUrl || "").trim()) return;
+
+      const populatedMessage = await createChatMessage({
+        senderId: socket.user._id,
+        receiverId,
+        content: String(content || "").trim(),
+        messageType,
+        imageUrl
+      });
+
+      io.to(String(receiverId)).emit("receiveMessage", populatedMessage);
+      io.to(socket.user._id.toString()).emit("receiveMessage", populatedMessage);
     } catch (err) {
       console.error("Error sending message:", err);
     }
@@ -161,10 +179,10 @@ io.on("connection", (socket) => {
   socket.on("seenMessages", async ({ partnerId }) => {
     if (!partnerId) return;
     try {
-      await ChatMessage.updateMany(
-        { sender: partnerId, receiver: socket.user._id, read: false },
-        { $set: { read: true } }
-      );
+      await markConversationAsSeen({
+        currentUserId: socket.user._id,
+        partnerId
+      });
       io.to(partnerId).emit("messagesSeen", {
         seenBy: socket.user._id.toString(),
         partnerId: partnerId.toString()
@@ -174,8 +192,34 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("conversationOpened", async ({ partnerId }) => {
+    if (!partnerId) return;
+
+    try {
+      await ensureConversationForUsers(socket.user._id, partnerId);
+      await markConversationAsDelivered({
+        currentUserId: socket.user._id,
+        partnerId
+      });
+
+      io.to(String(partnerId)).emit("messagesDelivered", {
+        deliveredTo: socket.user._id.toString(),
+        partnerId: String(partnerId)
+      });
+    } catch (err) {
+      console.error("Error marking messages delivered:", err);
+    }
+  });
+
   socket.on("disconnect", () => {
+    const remainingConnections = removeUserSocket(socket.user._id, socket.id);
     console.log(`User disconnected: ${socket.user._id}`);
+    if (remainingConnections === 0 && !isUserOnline(socket.user._id)) {
+      io.emit("presence:update", {
+        userId: socket.user._id.toString(),
+        isOnline: false
+      });
+    }
   });
 });
 

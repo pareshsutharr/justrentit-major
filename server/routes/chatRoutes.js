@@ -1,11 +1,23 @@
 const express = require("express");
 const router = express.Router();
 const ChatMessage = require("../models/ChatMessage");
+const ChatConversation = require("../models/ChatConversation");
 const User = require("../models/Users");
 const { verifyToken } = require("../middleware/auth");
 const { default: mongoose } = require("mongoose");
 const multer = require('multer');
 const path = require('path');
+const {
+  createChatMessage,
+  ensureConversationForUsers,
+  getConversationListForUser,
+  getPaginatedMessages,
+  getSearchableUsers,
+  markConversationAsDelivered,
+  markConversationAsSeen,
+  softDeleteMessageForEveryone
+} = require("../utils/chatService");
+const { isUserOnline } = require("../utils/chatPresence");
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/');
@@ -38,48 +50,57 @@ router.use((err, req, res, next) => {
   
   res.status(500).json({ message: 'Something broke!' });
 });
-// Get chat history between two users
-// In chatRoutes.js
-// Add validation for chat history endpoint
-router.get('/:senderId/:receiverId', verifyToken, async (req, res) => {
-    try {
-      const { senderId, receiverId } = req.params;
-  
-      // Validate both IDs
-      if (req.user._id.toString() !== senderId) {
-        return res.status(403).json({ message: 'Unauthorized access' });
-    }
-    
-  
-      const messages = await ChatMessage.find({
-        $or: [
-          { sender: senderId, receiver: receiverId },
-          { sender: receiverId, receiver: senderId }
-        ]
-      })
-      .sort({ createdAt: 1 })
-      .populate('sender', 'name profilePhoto')
-      .populate('receiver', 'name profilePhoto')
-      .lean();
-  
-      res.json(messages);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-      res.status(500).json({ message: 'Error retrieving chat history' });
-    }
-  });
-
-// Get all users (except current user)
-router.get('/', verifyToken, async (req, res) => {
+router.get('/conversations', verifyToken, async (req, res) => {
   try {
-    const users = await User.find({ _id: { $ne: req.user._id } })
-      .select('-password -googleId -createdAt -updatedAt -__v');
+    const conversations = await getConversationListForUser(req.user._id);
+    res.json(conversations);
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    res.status(500).json({ message: "Error retrieving conversations" });
+  }
+});
+
+router.get('/users/search', verifyToken, async (req, res) => {
+  try {
+    const users = await getSearchableUsers({
+      currentUserId: req.user._id,
+      query: req.query.q,
+      limit: req.query.limit
+    });
     res.json(users);
   } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("Error searching users:", error);
+    res.status(500).json({ message: "Error searching users" });
   }
-});// Send a new message
+});
+
+router.get('/thread/:partnerId', verifyToken, async (req, res) => {
+  try {
+    const { partnerId } = req.params;
+    const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 50);
+
+    if (!mongoose.Types.ObjectId.isValid(partnerId)) {
+      return res.status(400).json({ message: 'Invalid partner ID format' });
+    }
+
+    const thread = await getPaginatedMessages({
+      currentUserId: req.user._id,
+      partnerId,
+      limit,
+      cursor: req.query.cursor
+    });
+
+    await markConversationAsDelivered({
+      currentUserId: req.user._id,
+      partnerId
+    });
+
+    res.json(thread);
+  } catch (error) {
+    console.error('Error fetching paginated thread:', error);
+    res.status(500).json({ message: 'Error retrieving chat history' });
+  }
+});
 
 // router.post("/", async (req, res) => {
 //   const { sender, receiver, content } = req.body;
@@ -111,10 +132,11 @@ router.post("/", verifyToken, upload.single('image'), async (req, res) => {
     }
 
     const messageData = {
-      sender,
-      receiver,
+      senderId: sender,
+      receiverId: receiver,
       content: req.body.content || '',
-      messageType: 'text'
+      messageType: 'text',
+      imageUrl: ''
     };
 
     if (req.file) {
@@ -125,13 +147,13 @@ router.post("/", verifyToken, upload.single('image'), async (req, res) => {
       messageData.imageUrl = `${baseUrl}/uploads/${req.file.filename}`;
     }
 
-    const newMessage = new ChatMessage(messageData);
-    const savedMessage = await newMessage.save();
+    const savedMessage = await createChatMessage(messageData);
     
     // Emit socket event
     const io = req.app.get('socketio');
     if (io) {
-      io.to(receiver).emit('newMessage', savedMessage);
+      io.to(String(receiver)).emit('receiveMessage', savedMessage);
+      io.to(String(sender)).emit('receiveMessage', savedMessage);
     }
     
     res.status(201).json(savedMessage);
@@ -140,8 +162,6 @@ router.post("/", verifyToken, upload.single('image'), async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-// Get users that the current user has chatted with
-// Add verifyToken middleware to route
 router.get('/users/:userId', verifyToken, async (req, res) => {
     try {
       const userId = req.params.userId;
@@ -156,78 +176,7 @@ router.get('/users/:userId', verifyToken, async (req, res) => {
         return res.status(403).json({ message: 'Unauthorized access' });
       }
   
-      // Fixed aggregation pipeline
-      const chatUsers = await ChatMessage.aggregate([
-        {
-          $match: {
-            $or: [
-              { sender: new mongoose.Types.ObjectId(userId) },
-              { receiver: new mongoose.Types.ObjectId(userId) }
-            ]
-          }
-        },
-        { $sort: { createdAt: -1 } },
-        {
-          $addFields: {
-            partnerId: {
-              $cond: [
-                { $eq: ["$sender", new mongoose.Types.ObjectId(userId)] },
-                "$receiver",
-                "$sender"
-              ]
-            },
-            isUnreadForUser: {
-              $cond: [
-                {
-                  $and: [
-                    { $eq: ["$receiver", new mongoose.Types.ObjectId(userId)] },
-                    { $eq: ["$read", false] }
-                  ]
-                },
-                1,
-                0
-              ]
-            }
-          }
-        },
-        {
-          $group: {
-            _id: "$partnerId",
-            lastMessage: { $first: "$content" },
-            lastMessageType: { $first: "$messageType" },
-            lastMessageImageUrl: { $first: "$imageUrl" },
-            lastMessageAt: { $first: "$createdAt" },
-            unreadCount: { $sum: "$isUnreadForUser" }
-          }
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: '_id',
-            foreignField: '_id',
-            as: 'user'
-          }
-        },
-        { $unwind: "$user" },
-        {
-          $project: {
-            _id: "$user._id",
-            name: "$user.name",
-            profilePhoto: "$user.profilePhoto",
-            email: "$user.email",
-            lastMessage: {
-              $cond: [
-                { $eq: ["$lastMessageType", "image"] },
-                "Photo",
-                "$lastMessage"
-              ]
-            },
-            lastMessageAt: "$lastMessageAt",
-            unreadCount: "$unreadCount"
-          }
-        },
-        { $sort: { lastMessageAt: -1 } }
-      ]);
+      const chatUsers = await getConversationListForUser(userId);
   
       res.json(chatUsers);
     } catch (error) {
@@ -245,16 +194,10 @@ router.patch('/read/:partnerId', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'Invalid partner ID format' });
     }
 
-    await ChatMessage.updateMany(
-      {
-        sender: partnerId,
-        receiver: currentUserId,
-        read: false
-      },
-      {
-        $set: { read: true }
-      }
-    );
+    await markConversationAsSeen({
+      currentUserId,
+      partnerId
+    });
 
     res.json({ success: true });
   } catch (error) {
@@ -276,29 +219,56 @@ router.patch('/read/:partnerId', verifyToken, async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
           }
       
-          res.json({ success: true, user });
+          res.json({
+            success: true,
+            user: {
+              ...user.toObject(),
+              isOnline: isUserOnline(user._id)
+            }
+          });
         } catch (error) {
           console.error("Error fetching user:", error);
           res.status(500).json({ success: false, message: "Internal Server Error" });
         }
       });
       // Delete entire chat history between two users
+router.delete('/messages/:messageId', verifyToken, async (req, res) => {
+  try {
+    const message = await softDeleteMessageForEveryone({
+      messageId: req.params.messageId,
+      currentUserId: req.user._id
+    });
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    const io = req.app.get('socketio');
+    if (io) {
+      io.to(String(message.sender._id || message.sender)).emit('messageDeleted', message);
+      io.to(String(message.receiver._id || message.receiver)).emit('messageDeleted', message);
+    }
+
+    res.json({ success: true, message });
+  } catch (error) {
+    console.error("Error deleting message:", error);
+    res.status(500).json({ message: "Error deleting message" });
+  }
+});
+
 router.delete('/:senderId/:receiverId', verifyToken, async (req, res) => {
   try {
     const { senderId, receiverId } = req.params;
 
-    // Ensure the user is authorized to delete the chat
     if (req.user._id.toString() !== senderId) {
       return res.status(403).json({ message: 'Unauthorized action' });
     }
 
-    // Delete messages between these users
+    const conversation = await ensureConversationForUsers(senderId, receiverId);
     await ChatMessage.deleteMany({
-      $or: [
-        { sender: senderId, receiver: receiverId },
-        { sender: receiverId, receiver: senderId }
-      ]
+      conversation: conversation._id
     });
+    await ChatConversation.findByIdAndDelete(conversation._id);
 
     res.json({ success: true, message: "Chat history deleted successfully" });
   } catch (error) {
@@ -306,6 +276,28 @@ router.delete('/:senderId/:receiverId', verifyToken, async (req, res) => {
     res.status(500).json({ message: "Error deleting chat history" });
   }
 });
+
+// Backward-compatible history route
+router.get('/:senderId/:receiverId', verifyToken, async (req, res) => {
+    try {
+      const { senderId, receiverId } = req.params;
+  
+      if (req.user._id.toString() !== senderId) {
+        return res.status(403).json({ message: 'Unauthorized access' });
+      }
+
+      const thread = await getPaginatedMessages({
+        currentUserId: senderId,
+        partnerId: receiverId,
+        limit: 500
+      });
+  
+      res.json(thread.messages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      res.status(500).json({ message: 'Error retrieving chat history' });
+    }
+  });
 
   
 module.exports = router;
